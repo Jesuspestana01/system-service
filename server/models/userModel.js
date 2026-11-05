@@ -4,25 +4,25 @@ import { sequelize } from '../index.js';
 const User = sequelize.define(
   'User',
   {
-    id: {
+    id: { // identificador único del usuario
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    name: {
+    name: { // nombre del usuario
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    lastName: {
+    lastName: { // apellido del usuario
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    username: {
+    username: { // nombre de usuario para iniciar sesión
       type: DataTypes.STRING(50),
       allowNull: false,
       unique: true,
     },
-    email: {
+    email: { // correo electrónico del usuario
       type: DataTypes.STRING(150),
       allowNull: false,
       unique: true,
@@ -30,15 +30,15 @@ const User = sequelize.define(
         isEmail: true,
       },
     },
-    password: {
+    password: { // contraseña del usuario encriptada
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-    role: {
+    role: { // rol del usuario: administrador, técnico o recepción
       type: DataTypes.ENUM('administrador', 'técnico', 'recepción'),
       allowNull: false,
     },
-    status: {
+    status: { // estado del usuario: activo o inactivo
       type: DataTypes.ENUM('activo', 'inactivo'),
       allowNull: false,
       defaultValue: 'activo',

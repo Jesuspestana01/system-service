@@ -4,12 +4,12 @@ import { sequelize } from '../index.js';
 const Equipment = sequelize.define(
   'Equipment',
   {
-    id: {
+    id: { // identificador único del equipo
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    clientId: {
+    clientId: { // referencia al cliente dueño del equipo
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -19,36 +19,36 @@ const Equipment = sequelize.define(
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE',
     },
-    deviceType: {
+    deviceType: { // tipo de dispositivo (iPhone, MacBook, iPad, etc.)
       type: DataTypes.STRING(50),
       allowNull: false,
     },
-    brand: {
+    brand: { // marca del equipo
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    model: {
+    model: { // modelo del equipo
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    serialNumber: {
+    serialNumber: { // número de serie del equipo
       type: DataTypes.STRING(100),
       allowNull: false,
       unique: true,
     },
-    color: {
+    color: { // color del equipo
       type: DataTypes.STRING(50),
       allowNull: true,
     },
-    accessories: {
+    accessories: { // accesorios entregados con el equipo
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    physicalCondition: {
+    physicalCondition: { // estado físico del equipo al recibirlo
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    observations: {
+    observations: { // observaciones adicionales del equipo
       type: DataTypes.TEXT,
       allowNull: true,
     },

@@ -4,12 +4,12 @@ import { sequelize } from '../index.js';
 const Attachment = sequelize.define(
   'Attachment',
   {
-    id: {
+    id: { // identificador único del archivo adjunto
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    serviceOrderId: {
+    serviceOrderId: { // orden de servicio asociada al archivo
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -19,19 +19,19 @@ const Attachment = sequelize.define(
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE',
     },
-    fileName: {
+    fileName: { // nombre del archivo adjunto
       type: DataTypes.STRING(255),
       allowNull: false,
     },
-    fileUrl: {
+    fileUrl: { // URL o ruta del archivo almacenado
       type: DataTypes.STRING(500),
       allowNull: false,
     },
-    fileType: {
+    fileType: { // tipo de archivo (imagen, PDF, etc.)
       type: DataTypes.STRING(50),
       allowNull: true,
     },
-    uploadedBy: {
+    uploadedBy: { // usuario que subió el archivo
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
@@ -41,7 +41,7 @@ const Attachment = sequelize.define(
       onUpdate: 'CASCADE',
       onDelete: 'SET NULL',
     },
-    uploadedAt: {
+    uploadedAt: { // fecha de subida del archivo
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,

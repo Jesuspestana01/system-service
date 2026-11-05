@@ -4,12 +4,12 @@ import { sequelize } from '../index.js';
 const InventoryMovement = sequelize.define(
   'InventoryMovement',
   {
-    id: {
+    id: { // identificador único del movimiento
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    inventoryItemId: {
+    inventoryItemId: { // producto del inventario que se movió
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -19,19 +19,19 @@ const InventoryMovement = sequelize.define(
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE',
     },
-    movementType: {
+    movementType: { // tipo de movimiento: entrada o salida
       type: DataTypes.ENUM('entrada', 'salida'),
       allowNull: false,
     },
-    quantity: {
+    quantity: { // cantidad movida
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    reason: {
+    reason: { // motivo del movimiento
       type: DataTypes.STRING(255),
       allowNull: true,
     },
-    performedBy: {
+    performedBy: { // usuario que realizó el movimiento
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
@@ -41,7 +41,7 @@ const InventoryMovement = sequelize.define(
       onUpdate: 'CASCADE',
       onDelete: 'SET NULL',
     },
-    date: {
+    date: { // fecha del movimiento
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,

@@ -4,12 +4,12 @@ import { sequelize } from '../index.js';
 const ServiceHistory = sequelize.define(
   'ServiceHistory',
   {
-    id: {
+    id: { // identificador único del histórico
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    serviceOrderId: {
+    serviceOrderId: { // orden de servicio relacionada con este evento
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -19,7 +19,7 @@ const ServiceHistory = sequelize.define(
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE',
     },
-    userId: {
+    userId: { // usuario que realizó la acción
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -29,23 +29,23 @@ const ServiceHistory = sequelize.define(
       onUpdate: 'CASCADE',
       onDelete: 'SET NULL',
     },
-    action: {
+    action: { // acción que se realizó
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    description: {
+    description: { // detalle de la acción realizada
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    previousStatus: {
+    previousStatus: { // estado anterior de la orden
       type: DataTypes.STRING(50),
       allowNull: true,
     },
-    newStatus: {
+    newStatus: { // estado nuevo de la orden
       type: DataTypes.STRING(50),
       allowNull: true,
     },
-    createdAt: {
+    createdAt: { // fecha y hora del evento
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,

@@ -4,12 +4,12 @@ import { sequelize } from '../index.js';
 const UsedPart = sequelize.define(
   'UsedPart',
   {
-    id: {
+    id: { // identificador único del repuesto usado
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    serviceOrderId: {
+    serviceOrderId: { // orden de servicio a la que pertenece el repuesto usado
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -19,7 +19,7 @@ const UsedPart = sequelize.define(
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE',
     },
-    inventoryItemId: {
+    inventoryItemId: { // repuesto del inventario que fue consumido
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -29,12 +29,12 @@ const UsedPart = sequelize.define(
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE',
     },
-    quantity: {
+    quantity: { // cantidad de repuesto utilizada
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1,
     },
-    unitPrice: {
+    unitPrice: { // precio unitario del repuesto al momento de usarlo
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0,

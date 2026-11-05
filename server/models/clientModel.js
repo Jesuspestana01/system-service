@@ -4,25 +4,25 @@ import { sequelize } from '../index.js';
 const Client = sequelize.define(
   'Client',
   {
-    id: {
+    id: { // identificador único del cliente
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    name: {
+    name: { // nombre del cliente
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    lastName: {
+    lastName: { // apellido del cliente
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    identityDocument: {
+    identityDocument: { // documento de identidad del cliente
       type: DataTypes.STRING(50),
       allowNull: false,
       unique: true,
     },
-    email: {
+    email: { // correo electrónico del cliente
       type: DataTypes.STRING(150),
       allowNull: false,
       unique: true,
@@ -30,11 +30,11 @@ const Client = sequelize.define(
         isEmail: true,
       },
     },
-    phone: {
+    phone: { // teléfono de contacto del cliente
       type: DataTypes.STRING(30),
       allowNull: false,
     },
-    address: {
+    address: { // dirección del cliente (opcional)
       type: DataTypes.STRING(255),
       allowNull: true,
     },

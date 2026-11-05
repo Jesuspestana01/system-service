@@ -4,48 +4,48 @@ import { sequelize } from '../index.js';
 const Inventory = sequelize.define(
   'Inventory',
   {
-    id: {
+    id: { // identificador único del producto del inventario
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    name: {
+    name: { // nombre del repuesto o material
       type: DataTypes.STRING(150),
       allowNull: false,
     },
-    description: {
+    description: { // descripción del producto
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    category: {
+    category: { // categoría o tipo de producto
       type: DataTypes.STRING(100),
       allowNull: false,
     },
-    brand: {
+    brand: { // marca del repuesto
       type: DataTypes.STRING(100),
       allowNull: true,
     },
-    sku: {
+    sku: { // código interno del producto
       type: DataTypes.STRING(100),
       allowNull: false,
       unique: true,
     },
-    quantity: {
+    quantity: { // cantidad disponible en inventario
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
     },
-    minimumStock: {
+    minimumStock: { // stock mínimo recomendado
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
     },
-    unitPrice: {
+    unitPrice: { // precio unitario del producto
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       defaultValue: 0,
     },
-    status: {
+    status: { // estado del producto en inventario
       type: DataTypes.ENUM('disponible', 'agotado', 'en revisión'),
       allowNull: false,
       defaultValue: 'disponible',
