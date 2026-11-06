@@ -24,6 +24,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 // TODO: reemplazar con datos reales del backend / sesión
 const userName = "Jesús";
@@ -92,19 +93,8 @@ const Main = () => {
     });
 
     return (
-        <section className="min-h-svh bg-muted/30">
-            <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <nav className="flex h-16 items-center justify-between px-4 md:px-8">
-                    <Link to="/main" className="flex items-center gap-2 font-medium">
-                        <img className="h-15" src="system-service-logo.png"/>
-                    </Link>
-                    <Button variant="outline" onClick={handleLogout}>
-                        <LogOut />
-                        Cerrar sesión
-                    </Button>
-                </nav>
-            </header>
-
+        <>
+        <AppHeader/>
             <main className="mx-auto w-full max-w-5xl space-y-10 px-4 py-12">
                 {/* Saludo */}
                 <div className="space-y-1">
@@ -187,7 +177,7 @@ const Main = () => {
                     </CardContent>
                 </Card>
             </main>
-        </section>
+        </>
     );
 };
 
