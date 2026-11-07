@@ -51,4 +51,17 @@ Attachment.belongsTo(User, { foreignKey: 'uploadedBy', as: 'uploadedByUser' });
 ServiceOrder.hasMany(Payment, { foreignKey: 'serviceOrderId', as: 'payments' });
 Payment.belongsTo(ServiceOrder, { foreignKey: 'serviceOrderId', as: 'serviceOrder' });
 
-export { Client, User, Equipment, ServiceOrder, Inventory, ServiceHistory, InventoryMovement, UsedPart, Attachment, Payment };
+export {
+  Client,
+  User,
+  Equipment,
+  ServiceOrder,
+  Inventory,
+  ServiceHistory,
+  InventoryMovement,
+  UsedPart,
+  Attachment,
+  Payment,
+};
+
+
