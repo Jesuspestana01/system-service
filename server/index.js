@@ -1,32 +1,61 @@
 import { Sequelize } from "sequelize";
-import dotenv from 'dotenv'
+import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Debug info
-console.log('Connecting to database:', process.env.CONNECTION_STRING)
+let sequelize = null;
+const neonConnectionString = process.env.NEON_CONNECTION_STRING || process.env.CONNECTION_STRING;
 
-// Initialize instance of Sequelize
-const sequelize = process.env.CONNECTION_STRING 
-  ? new Sequelize(process.env.CONNECTION_STRING, {
-      logging: console.log(),
+if (neonConnectionString) {
+  console.log('Trying to connect to Neon DB...');
+  const tempSequelize = new Sequelize(neonConnectionString, {
+    logging: false,
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false
+      }
+    }
+  });
+
+  try {
+    await tempSequelize.authenticate();
+    console.log('Successful connection to Neon DB');
+    sequelize = tempSequelize;
+  } catch (error) {
+    console.warn('Could not connect to Neon DB. Falling back to local PostgreSQL...');
+    console.warn(`Error detail: ${error.message}`);
+  }
+} else {
+  console.log('No Neon DB connection string detected in the environment.');
+}
+
+if (!sequelize) {
+  console.log('Trying to connect to local PostgreSQL...');
+  const localSequelize = new Sequelize(
+    process.env.DB_NAME,
+    process.env.DB_USER,
+    process.env.DB_PASSWORD,
+    {
+      host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 5432,
+      dialect: process.env.DB_DIALECT || 'postgres',
+      logging: false,
       dialectOptions: {
         ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
       }
-    })
-  : new Sequelize(
-      process.env.DB_NAME, 
-      process.env.DB_USER, 
-      process.env.DB_PASSWORD, 
-      {
-        host: process.env.DB_HOST,
-        port: process.env.DB_PORT,
-        dialect: process.env.DB_DIALECT,
-        logging: false,
-        dialectOptions: {
-          ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
-        }
-      }
-    );
+    }
+  );
 
-export {sequelize};
+  try {
+    await localSequelize.authenticate();
+    console.log('Successful connection to local PostgreSQL');
+    sequelize = localSequelize;
+  } catch (error) {
+    console.error('Critical error: Could not connect to the local database either.');
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+export { sequelize };

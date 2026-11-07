@@ -41,9 +41,6 @@ app.use('/api/used-parts', usedPartRoutes);
 app.use('/api/attachments', attachmentRoutes);
 app.use('/api/payments', paymentRoutes);
 
-// Legacy aliases to preserve compatibility with the current project
-app.use('/users', userRoutes);
-
 sequelize
   .authenticate()
   .then(() => {
