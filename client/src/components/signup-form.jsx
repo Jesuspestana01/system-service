@@ -15,6 +15,9 @@ export function SignupForm({
   className,
   ...props
 }) {
+  // TODO [BACKEND - POST /api/auth/register]:
+  // Manejar `onSubmit` validando que `password === confirmPassword` y llamando a `register(...)`
+  // en `src/services/auth.service.js` (modelo `User`: name, lastName, username, email, password, role).
   return (
     <form className={cn("flex flex-col gap-6", className)} {...props}>
       <FieldGroup>

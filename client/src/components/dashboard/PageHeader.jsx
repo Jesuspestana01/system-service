@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function PageHeader({ title, description, actions, backTo = "/main" }) {
+export function PageHeader({ title, description, actions, backTo = "/main", backLabel = "Volver al inicio" }) {
     return (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="space-y-1">
@@ -14,7 +14,7 @@ export function PageHeader({ title, description, actions, backTo = "/main" }) {
                     render={<Link to={backTo} />}
                 >
                     <ArrowLeft />
-                    Volver al inicio
+                    {backLabel}
                 </Button>
                 <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
                 {description && <p className="text-muted-foreground">{description}</p>}

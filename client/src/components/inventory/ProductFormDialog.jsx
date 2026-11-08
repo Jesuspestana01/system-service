@@ -13,6 +13,9 @@ import { Input } from "@/components/ui/input";
 import { SimpleSelect } from "@/components/dashboard/SimpleSelect";
 import { PRODUCT_CATEGORIES } from "@/data/inventory";
 
+// TODO [BACKEND - POST /api/inventory y PUT /api/inventory/:id]:
+// Conectar `onSubmit` con `createProduct` / `updateProduct` (`src/services/inventory.service.js`).
+// Mapeo hacia `server/models/inventoryModel.js`: `stock -> quantity`, `minStock -> minimumStock`, `price -> unitPrice`, `supplier -> brand`.
 export function ProductFormDialog({ open, onOpenChange, product, onSubmit }) {
     const isEditing = Boolean(product);
 

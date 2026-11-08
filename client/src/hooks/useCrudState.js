@@ -25,10 +25,13 @@ export function useCrudState(initialItems, createId) {
     const save = (data) => {
         if (form.item) {
             update(form.item.id, data);
-        } else {
-            setItems((prev) => [{ ...data, id: createId(prev) }, ...prev]);
+            setFormOpen(false);
+            return { ...form.item, ...data };
         }
+        const created = { ...data, id: createId(items) };
+        setItems((prev) => [created, ...prev]);
         setFormOpen(false);
+        return created;
     };
 
     const confirmDelete = () => {
