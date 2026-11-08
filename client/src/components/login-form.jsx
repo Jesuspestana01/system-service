@@ -47,6 +47,9 @@ export function LoginForm({
             <Link to={"/signup"} className="underline underline-offset-4">
               Regístrate
             </Link>
+            <Link to={"/main"} className="underline underline-offset-4">
+              Main
+            </Link>
           </FieldDescription>
         </Field>
       </FieldGroup>
