@@ -1,5 +1,4 @@
 import { SignupForm } from "@/components/signup-form";
-import { GalleryVerticalEnd } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Signup = () => {
@@ -7,7 +6,7 @@ const Signup = () => {
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="relative hidden bg-muted lg:block">
         <img
-          src="/placeholder.svg"
+          src="/apple.jpg"
           alt="Image"
           className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
         />

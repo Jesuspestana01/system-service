@@ -1,8 +1,6 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
     ArrowRight,
-    GalleryVerticalEnd,
-    LogOut,
     Package,
     Users,
     Wrench,
@@ -25,10 +23,14 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { orders, ORDER_STATUS_STYLES } from "@/data/orders";
+import { formatDate } from "@/lib/format";
 
-// TODO: reemplazar con datos reales del backend / sesión
+// TODO [BACKEND - GET /api/auth/me]: obtener el nombre del usuario autenticado desde la sesión (`User.name`)
 const userName = "Jesús";
 
+// TODO [BACKEND - GET /api/dashboard/summary]:
+// Reemplazar `stat` por contadores reales desde el backend (`ServiceOrder.count`, `Client.count`, `Inventory.count`).
 const cardsContent = [
     {
         title: "Órdenes",
@@ -56,20 +58,8 @@ const cardsContent = [
     },
 ];
 
-const recentOrders = [
-    { id: "OS-1042", customer: "María González", device: "Laptop HP Pavilion 15", status: "Recibido", date: "05/11/2026" },
-    { id: "OS-1041", customer: "Carlos Pérez", device: "iPhone 13", status: "En reparación", date: "04/11/2026" },
-    { id: "OS-1040", customer: "Ana Rodríguez", device: "Samsung Galaxy S22", status: "Listo", date: "04/11/2026" },
-    { id: "OS-1039", customer: "Luis Martínez", device: "PC Escritorio Dell", status: "En reparación", date: "03/11/2026" },
-    { id: "OS-1038", customer: "Sofía Herrera", device: "iPad Air", status: "Entregado", date: "02/11/2026" },
-];
-
-const statusStyles = {
-    "Recibido": "border-blue-200 bg-blue-50 text-blue-700",
-    "En reparación": "border-amber-200 bg-amber-50 text-amber-700",
-    "Listo": "border-emerald-200 bg-emerald-50 text-emerald-700",
-    "Entregado": "border-zinc-200 bg-zinc-100 text-zinc-600",
-};
+// TODO [BACKEND - GET /api/orders?limit=5]: cargar las últimas 5 órdenes de servicio reales
+const recentOrders = orders.slice(0, 5);
 
 const getGreeting = () => {
     const hour = new Date().getHours();
@@ -79,12 +69,6 @@ const getGreeting = () => {
 };
 
 const Main = () => {
-    const navigate = useNavigate();
-
-    const handleLogout = () => {
-        navigate("/");
-    };
-
     const today = new Date().toLocaleDateString("es", {
         weekday: "long",
         day: "numeric",
@@ -161,15 +145,24 @@ const Main = () => {
                             <TableBody>
                                 {recentOrders.map((order) => (
                                     <TableRow key={order.id}>
-                                        <TableCell className="font-medium">{order.id}</TableCell>
+                                        <TableCell className="font-medium">
+                                            <Link
+                                                to={`/orders/${order.id}`}
+                                                className="text-primary underline-offset-4 hover:underline"
+                                            >
+                                                {order.id}
+                                            </Link>
+                                        </TableCell>
                                         <TableCell>{order.customer}</TableCell>
                                         <TableCell className="text-muted-foreground">{order.device}</TableCell>
                                         <TableCell>
-                                            <Badge variant="outline" className={statusStyles[order.status]}>
+                                            <Badge variant="outline" className={ORDER_STATUS_STYLES[order.status]}>
                                                 {order.status}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className="text-right text-muted-foreground">{order.date}</TableCell>
+                                        <TableCell className="text-right text-muted-foreground">
+                                            {formatDate(order.receivedAt)}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

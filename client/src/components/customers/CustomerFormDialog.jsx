@@ -11,11 +11,16 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
+// TODO [BACKEND - POST /api/clients y PUT /api/clients/:id]:
+// Conectar `onSubmit` con `createCustomer` / `updateCustomer` (`src/services/customers.service.js`).
+// Nota: el modelo `Client` en `server/models/clientModel.js` separa `name` y `lastName`, usa `identityDocument` y exige `email`.
 export function CustomerFormDialog({ open, onOpenChange, customer, onSubmit }) {
     const isEditing = Boolean(customer);
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        // Evita que el envío llegue a un formulario padre cuando este modal se usa anidado
+        e.stopPropagation();
         onSubmit(Object.fromEntries(new FormData(e.currentTarget)));
     };
 

@@ -15,6 +15,9 @@ export function LoginForm({
   className,
   ...props
 }) {
+  // TODO [BACKEND - POST /api/auth/login]:
+  // Manejar `onSubmit` llamando a `login({ email, password })` de `src/services/auth.service.js`,
+  // guardar el JWT (`tokenStorage.set`) y redirigir a `/main` con `useNavigate()`.
   return (
     <form className={cn("flex flex-col gap-6", className)} {...props}>
       <FieldGroup>

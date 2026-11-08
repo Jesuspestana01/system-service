@@ -26,6 +26,9 @@ import { customers as initialCustomers } from "@/data/customers";
 const isThisMonth = (isoDate) => isoDate?.slice(0, 7) === todayISO().slice(0, 7);
 
 const Customers = () => {
+    // TODO [BACKEND - GET /api/clients]:
+    // Reemplazar `initialCustomers` cargando `getCustomers()` desde `src/services/customers.service.js`.
+    // Para crear, editar y eliminar, usar `createCustomer`, `updateCustomer` y `deleteCustomer` contra el modelo `Client`.
     const crud = useCrudState(initialCustomers, (items) => nextId(items, "CL"));
     const [search, setSearch] = useState("");
 

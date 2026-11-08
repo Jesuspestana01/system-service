@@ -1,4 +1,6 @@
-// TODO: datos de prueba. Reemplazar por la API cuando el backend esté listo.
+// TODO [BACKEND - Client (`server/models/clientModel.js`)]:
+// Datos de prueba. Reemplazar por `src/services/customers.service.js`.
+// Nota: `Client` en Sequelize separa `name` y `lastName`, usa `identityDocument` en vez de `document` y exige `email` (`allowNull: false`).
 
 export const customers = [
     {

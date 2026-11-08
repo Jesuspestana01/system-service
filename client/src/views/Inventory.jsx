@@ -42,6 +42,9 @@ const STOCK_BADGES = {
 };
 
 const Inventory = () => {
+    // TODO [BACKEND - GET /api/inventory]:
+    // Reemplazar `initialProducts` cargando `getProducts()` desde `src/services/inventory.service.js`.
+    // Para crear, editar y eliminar productos, usar `createProduct`, `updateProduct` y `deleteProduct` contra el modelo `Inventory`.
     const crud = useCrudState(initialProducts, (items) => nextId(items, "INV"));
     const [search, setSearch] = useState("");
     const [categoryFilter, setCategoryFilter] = useState("all");
@@ -70,6 +73,9 @@ const Inventory = () => {
     );
 
     const adjustStock = (product, amount) => {
+        // TODO [BACKEND - PATCH /api/inventory/:id/stock]:
+        // Llamar a `adjustProductStock(product.id, amount)` para actualizar `Inventory.quantity`
+        // y crear el registro correspondiente en `InventoryMovement` (`entrada` o `salida`).
         crud.update(product.id, { stock: Math.max(0, product.stock + amount) });
     };
 
