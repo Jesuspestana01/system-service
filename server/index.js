@@ -1,5 +1,8 @@
+import net from "node:net";
 import { Sequelize } from "sequelize";
 import dotenv from 'dotenv';
+
+net.setDefaultAutoSelectFamily(false);
 
 dotenv.config();
 
@@ -24,7 +27,7 @@ if (neonConnectionString) {
     sequelize = tempSequelize;
   } catch (error) {
     console.warn('Could not connect to Neon DB. Falling back to local PostgreSQL...');
-    console.warn(`Error detail: ${error.message}`);
+    console.warn(`Error detail: ${error.message || error.original?.code || error}`);
   }
 } else {
   console.log('No Neon DB connection string detected in the environment.');

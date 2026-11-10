@@ -6,7 +6,7 @@
  * la autenticación (JWT), los headers y el manejo de errores queden en un único lugar.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? "https://system-service-eizd.onrender.com/api";
 const TOKEN_KEY = "auth_token";
 
 export const tokenStorage = {
