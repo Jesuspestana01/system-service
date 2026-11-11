@@ -1,4 +1,7 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3010/api";
+// Normaliza la URL base para que siempre termine en `/api` sin barra final,
+// incluso si en `.env` se configuró solo el dominio (ej: "https://system-service-eizd.onrender.com")
+const rawBaseUrl = (import.meta.env.VITE_API_URL ?? "http://localhost:3010/api").trim().replace(/\/+$/, "");
+const API_BASE_URL = rawBaseUrl.endsWith("/api") ? rawBaseUrl : `${rawBaseUrl}/api`;
 const TOKEN_KEY = "auth_token";
 
 export const tokenStorage = {
