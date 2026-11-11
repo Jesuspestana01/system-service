@@ -29,6 +29,7 @@ import { formatDate } from "@/lib/format";
 
 // TODO [BACKEND - GET /api/auth/me]: obtener el nombre del usuario autenticado desde la sesión (`User.name`)
 const userName = localStorage.getItem("name")
+console.log(userName)
 
 // TODO [BACKEND - GET /api/dashboard/summary]:
 // Reemplazar `stat` por contadores reales desde el backend (`ServiceOrder.count`, `Client.count`, `Inventory.count`).
