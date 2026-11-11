@@ -1,11 +1,3 @@
-/**
- * Cliente HTTP centralizado para comunicarse con el backend (`server/`).
- *
- * Configura `VITE_API_URL` en `client/.env` (ej: `VITE_API_URL=http://localhost:3010/api`).
- * Todas las funciones de `src/services/*.service.js` deben pasar por `apiRequest` para que
- * la autenticación (JWT), los headers y el manejo de errores queden en un único lugar.
- */
-
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3010/api";
 const TOKEN_KEY = "auth_token";
 

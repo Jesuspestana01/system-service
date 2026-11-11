@@ -2,7 +2,7 @@ import { apiRequest } from "@/services/api";
 
 export const USER_ROLES = [
     { value: "técnico", label: "Técnico" },
-    { value: "recepción", label: "Recepción" },
+    { value: "recepción", label: "Vendedor" },
     { value: "administrador", label: "Administrador" },
 ];
 
@@ -21,9 +21,6 @@ export async function register({ name, lastName, username, email, password, role
     return response.data;
 }
 
-/**
- * Inicio de sesión contra `POST /api/users/login` (`server/routes/userRoutes.js`).
- */
 export const login = async ({ email, password }) => {
     const normalizedEmail = email.trim().toLowerCase();
 

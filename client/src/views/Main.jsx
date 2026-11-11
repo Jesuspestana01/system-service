@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import {
     ArrowRight,
     Package,
+    UserCog,
     Users,
     Wrench,
 } from "lucide-react";
@@ -69,6 +70,8 @@ const getGreeting = () => {
 };
 
 const Main = () => {
+    const isAdmin = localStorage.getItem("role") === "administrador";
+
     const today = new Date().toLocaleDateString("es", {
         weekday: "long",
         day: "numeric",
@@ -78,7 +81,14 @@ const Main = () => {
 
     return (
         <>
-        <AppHeader/>
+        <AppHeader>
+            {isAdmin && (
+                <Button variant="secondary" nativeButton={false} render={<Link to="/employees" />}>
+                    <UserCog />
+                    Gestionar empleados
+                </Button>
+            )}
+        </AppHeader>
             <main className="mx-auto w-full max-w-5xl space-y-10 px-4 py-12">
                 {/* Saludo */}
                 <div className="space-y-1">

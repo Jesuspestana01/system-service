@@ -42,6 +42,8 @@ const STOCK_BADGES = {
 };
 
 const Inventory = () => {
+    const isAdmin = localStorage.getItem("role") === "administrador";
+
     // TODO [BACKEND - GET /api/inventory]:
     // Reemplazar `initialProducts` cargando `getProducts()` desde `src/services/inventory.service.js`.
     // Para crear, editar y eliminar productos, usar `createProduct`, `updateProduct` y `deleteProduct` contra el modelo `Inventory`.
@@ -85,10 +87,12 @@ const Inventory = () => {
                 title="Inventario"
                 description="Controla los repuestos y accesorios disponibles en el taller."
                 actions={
-                    <Button onClick={crud.openCreate}>
-                        <Plus />
-                        Nuevo producto
-                    </Button>
+                    isAdmin && (
+                        <Button onClick={crud.openCreate}>
+                            <Plus />
+                            Nuevo producto
+                        </Button>
+                    )
                 }
             />
 
@@ -132,11 +136,11 @@ const Inventory = () => {
                                 <TableHead className="text-center">Stock</TableHead>
                                 <TableHead>Estado</TableHead>
                                 <TableHead className="text-right">Precio</TableHead>
-                                <TableHead className="w-10" />
+                                {isAdmin && <TableHead className="w-10" />}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredProducts.length === 0 && <EmptyTableRow colSpan={7} />}
+                            {filteredProducts.length === 0 && <EmptyTableRow colSpan={isAdmin ? 7 : 6} />}
                             {filteredProducts.map((product) => {
                                 const stockBadge = STOCK_BADGES[getStockStatus(product)];
                                 return (
@@ -148,21 +152,25 @@ const Inventory = () => {
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">{product.category}</TableCell>
                                         <TableCell>
-                                            {/* Ajuste rápido de stock */}
+                                            {/* Ajuste rápido de stock (solo administradores) */}
                                             <div className="flex items-center justify-center gap-1">
-                                                <Button
-                                                    variant="outline"
-                                                    size="icon-xs"
-                                                    aria-label="Restar 1"
-                                                    disabled={product.stock <= 0}
-                                                    onClick={() => adjustStock(product, -1)}
-                                                >
-                                                    <Minus />
-                                                </Button>
+                                                {isAdmin && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon-xs"
+                                                        aria-label="Restar 1"
+                                                        disabled={product.stock <= 0}
+                                                        onClick={() => adjustStock(product, -1)}
+                                                    >
+                                                        <Minus />
+                                                    </Button>
+                                                )}
                                                 <span className="w-8 text-center font-medium tabular-nums">{product.stock}</span>
-                                                <Button variant="outline" size="icon-xs" aria-label="Sumar 1" onClick={() => adjustStock(product, 1)}>
-                                                    <Plus />
-                                                </Button>
+                                                {isAdmin && (
+                                                    <Button variant="outline" size="icon-xs" aria-label="Sumar 1" onClick={() => adjustStock(product, 1)}>
+                                                        <Plus />
+                                                    </Button>
+                                                )}
                                             </div>
                                             <div className="mt-0.5 text-center text-[11px] text-muted-foreground">mín. {product.minStock}</div>
                                         </TableCell>
@@ -172,9 +180,11 @@ const Inventory = () => {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">{formatCurrency(product.price)}</TableCell>
-                                        <TableCell>
-                                            <RowActions onEdit={() => crud.openEdit(product)} onDelete={() => crud.requestDelete(product)} />
-                                        </TableCell>
+                                        {isAdmin && (
+                                            <TableCell>
+                                                <RowActions onEdit={() => crud.openEdit(product)} onDelete={() => crud.requestDelete(product)} />
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 );
                             })}
@@ -183,20 +193,24 @@ const Inventory = () => {
                 </CardContent>
             </Card>
 
-            <ProductFormDialog
-                open={crud.form.open}
-                onOpenChange={crud.setFormOpen}
-                product={crud.form.item}
-                onSubmit={crud.save}
-            />
+            {isAdmin && (
+                <>
+                    <ProductFormDialog
+                        open={crud.form.open}
+                        onOpenChange={crud.setFormOpen}
+                        product={crud.form.item}
+                        onSubmit={crud.save}
+                    />
 
-            <ConfirmDeleteDialog
-                open={Boolean(crud.itemToDelete)}
-                onOpenChange={(open) => !open && crud.cancelDelete()}
-                title={`¿Eliminar "${crud.itemToDelete?.name ?? "este producto"}"?`}
-                description="El producto se eliminará del inventario. Esta acción no se puede deshacer."
-                onConfirm={crud.confirmDelete}
-            />
+                    <ConfirmDeleteDialog
+                        open={Boolean(crud.itemToDelete)}
+                        onOpenChange={(open) => !open && crud.cancelDelete()}
+                        title={`¿Eliminar "${crud.itemToDelete?.name ?? "este producto"}"?`}
+                        description="El producto se eliminará del inventario. Esta acción no se puede deshacer."
+                        onConfirm={crud.confirmDelete}
+                    />
+                </>
+            )}
         </DashboardLayout>
     );
 };
