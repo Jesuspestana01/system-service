@@ -18,9 +18,14 @@ import paymentRoutes from './paymentRoutes.js';
 const app = express();
 const port = process.env.PORT || 3000;
 
+const allowedOrigins = [
+  "https://system-service-phi.vercel.app",
+  "'http://localhost:5173'"
+]
+
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
