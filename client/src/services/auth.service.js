@@ -1,38 +1,65 @@
-/**
- * Servicio de Autenticación y Usuarios -> Modelo Sequelize: `User` (`server/models/userModel.js`)
- * Campos del modelo: id, name, lastName, username, email, password, role ('administrador'|'técnico'|'recepción'), status ('activo'|'inactivo')
- */
-import { apiRequest, tokenStorage } from "@/services/api";
+import { apiRequest } from "@/services/api";
 
-// TODO [BACKEND - POST /api/auth/login]:
-// Validar credenciales contra `users`, verificar `status === 'activo'` y devolver `{ token, user }`.
-export async function login(credentials) {
-    const data = await apiRequest("/auth/login", { method: "POST", body: credentials });
-    tokenStorage.set(data.token);
-    return data.user;
+export const USER_ROLES = [
+    { value: "técnico", label: "Técnico" },
+    { value: "recepción", label: "Vendedor" },
+    { value: "administrador", label: "Administrador" },
+];
+
+export async function register({ name, lastName, username, email, password, role }) {
+    const response = await apiRequest("/users", {
+        method: "POST",
+        body: {
+            name: name.trim(),
+            lastName: lastName.trim(),
+            username: username.trim(),
+            email: email.trim().toLowerCase(),
+            password,
+            role,
+        },
+    });
+    return response.data;
 }
 
-// TODO [BACKEND - POST /api/auth/register]:
-// Crear usuario en `users` con contraseña encriptada (bcrypt).
-// Nota: el modelo `User` exige `name`, `lastName`, `username`, `email`, `password` y `role`.
-export function register(payload) {
-    return apiRequest("/auth/register", { method: "POST", body: payload });
-}
+export const login = async ({ email, password }) => {
+    const normalizedEmail = email.trim().toLowerCase();
 
-// TODO [BACKEND - POST /api/auth/logout]:
-// Limpiar el token local y, si usas sesiones/refresh tokens en el servidor, invalidarlos.
-export function logout() {
-    tokenStorage.clear();
-}
+    const response = await apiRequest("/users/login", {
+        method: "POST",
+        body: { email: normalizedEmail, password },
+    });
 
-// TODO [BACKEND - GET /api/auth/me]:
-// Devolver el usuario autenticado a partir del JWT para mostrar su nombre y rol en `Main.jsx` y `AppHeader.jsx`.
+    if (response.status === "ok" || response.success) {
+        const user = response.data;
+        localStorage.setItem("id", user.id);
+        localStorage.setItem("role", user.role);
+        if (user.name) localStorage.setItem("name", user.name);
+        localStorage.setItem("auth_user", JSON.stringify(user));
+        return user;
+    }
+
+    throw new Error(response.message || "No se pudo iniciar sesión");
+};
+
 export function getCurrentUser() {
-    return apiRequest("/auth/me");
+    try {
+        const raw = localStorage.getItem("auth_user");
+        if (raw) return JSON.parse(raw);
+    } catch {
+        // Ignorar errores de parseo
+    }
+    const name = localStorage.getItem("name");
+    const id = localStorage.getItem("id");
+    const role = localStorage.getItem("role");
+    return id ? { id, name, role } : null;
 }
 
-// TODO [BACKEND - GET /api/users?role=técnico&status=activo]:
-// Listar los técnicos activos para los selectores de técnico asignado en `OrderFormDialog` y `OrderDetail`.
-export function getTechnicians() {
-    return apiRequest("/users?role=técnico&status=activo");
+export function logout() {
+    localStorage.clear();
+    window.location.href = "/"
+}
+
+export async function getTechnicians() {
+    const response = await apiRequest("/users?role=técnico&status=activo&limit=100");
+    return response.data ?? [];
 }

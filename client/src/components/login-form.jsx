@@ -1,25 +1,47 @@
+import { useState } from "react"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
-
 import { Button } from "@/components/ui/button"
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { Link } from "react-router-dom"
+import { login } from "@/services/auth.service"
 
-export function LoginForm({
+export const LoginForm = ({
   className,
   ...props
-}) {
-  // TODO [BACKEND - POST /api/auth/login]:
-  // Manejar `onSubmit` llamando a `login({ email, password })` de `src/services/auth.service.js`,
-  // guardar el JWT (`tokenStorage.set`) y redirigir a `/main` con `useNavigate()`.
+}) => {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const registeredMessage = location.state?.registeredMessage
+
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError("")
+    setSubmitting(true)
+
+    try {
+      await login({ email, password })
+      navigate("/main")
+    } catch (err) {
+      setError(err.message || "Correo o contraseña incorrectos")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props}>
+    <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Inicia sesión en tu cuenta</h1>
@@ -27,9 +49,29 @@ export function LoginForm({
             Ingresa tu correo electrónico a continuación para iniciar sesión en tu cuenta
           </p>
         </div>
+
+        {registeredMessage && !error && (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-xs font-medium text-emerald-700">
+            {registeredMessage}
+          </div>
+        )}
+
+        {error && (
+          <FieldError className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-center">
+            {error}
+          </FieldError>
+        )}
+
         <Field>
           <FieldLabel htmlFor="email">Correo electrónico</FieldLabel>
-          <Input id="email" type="email" placeholder="m@example.com" required />
+          <Input
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            placeholder="m@example.com"
+            required
+          />
         </Field>
         <Field>
           <div className="flex items-center">
@@ -41,10 +83,18 @@ export function LoginForm({
               ¿Olvidaste tu contraseña?
             </a>
           </div>
-          <Input id="password" type="password" required />
+          <Input
+            id="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            required
+          />
         </Field>
         <Field>
-          <Button type="submit">Iniciar sesión</Button>
+          <Button type="submit" disabled={submitting}>
+            {submitting ? "Iniciando sesión..." : "Iniciar sesión"}
+          </Button>
           <FieldDescription className="text-center">
             ¿No tienes una cuenta?{" "}
             <Link to={"/signup"} className="underline underline-offset-4">

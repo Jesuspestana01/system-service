@@ -66,6 +66,48 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Login endpoint
+router.post("/login", async (req, res) => {
+  const data = req.body;
+
+  try {
+    if (!data?.email || !data?.password) {
+      return res.status(400).json({ success: false, message: "Debes ingresar correo y contraseña" });
+    }
+
+    // Check if user exists
+    const existingUser = await User.findOne({
+      where: {
+        email: data.email.trim().toLowerCase(),
+      },
+    });
+
+    if (!existingUser) {
+      return res.status(400).json({ success: false, message: "El usuario no existe" });
+    }
+
+    const checkPassword = existingUser.password === data.password;
+    if (!checkPassword) {
+      return res.status(400).json({ success: false, message: "Correo o contraseña incorrectos" });
+    }
+
+    const payload = {
+      id: existingUser.id,
+      name: existingUser.name,
+      lastName: existingUser.lastName,
+      email: existingUser.email,
+      role: existingUser.role,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 2,
+    };
+
+    return res.status(200).json({ success: true, status: "ok", data: payload });
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({ success: false, status: "error", message: "Error interno del servidor" });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id, {
