@@ -1,5 +1,4 @@
 // Utilidades de formato compartidas por las vistas
-
 const currencyFormatter = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -18,7 +17,6 @@ export const formatDate = (isoDate) => {
     });
 };
 
-// Recibe fecha/hora ISO ("YYYY-MM-DDTHH:mm" o timestamp del servidor)
 export const formatDateTime = (isoDateTime) => {
     if (!isoDateTime) return "—";
     return new Date(isoDateTime).toLocaleString("es", {
@@ -30,10 +28,8 @@ export const formatDateTime = (isoDateTime) => {
     });
 };
 
-// Fecha local de hoy en formato "YYYY-MM-DD"
 export const todayISO = () => new Date().toLocaleDateString("en-CA");
 
-// Fecha y hora actual en formato ISO
 export const nowISO = () => new Date().toISOString();
 
 export const getInitials = (name = "") =>

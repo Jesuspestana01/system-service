@@ -14,13 +14,14 @@ import inventoryMovementRoutes from './inventoryMovementRoutes.js';
 import usedPartRoutes from './usedPartRoutes.js';
 import attachmentRoutes from './attachmentRoutes.js';
 import paymentRoutes from './paymentRoutes.js';
+import dashboardRoutes from './dashboardRoutes.js';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 const allowedOrigins = [
   "https://system-service-phi.vercel.app",
-  "'http://localhost:5173'"
+  "http://localhost:5173"
 ]
 
 app.use(
@@ -45,6 +46,7 @@ app.use('/api/inventory-movements', inventoryMovementRoutes);
 app.use('/api/used-parts', usedPartRoutes);
 app.use('/api/attachments', attachmentRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 sequelize
   .authenticate()
