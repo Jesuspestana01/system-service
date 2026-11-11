@@ -6,7 +6,8 @@ export const USER_ROLES = [
     { value: "administrador", label: "Administrador" },
 ];
 
-export async function register({ name, lastName, username, email, password, role }) {
+// Fetch del registro
+export const register = async({ name, lastName, username, email, password, role }) => {
     const response = await apiRequest("/users", {
         method: "POST",
         body: {
@@ -21,6 +22,7 @@ export async function register({ name, lastName, username, email, password, role
     return response.data;
 }
 
+// Fetch del login
 export const login = async ({ email, password }) => {
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -33,6 +35,7 @@ export const login = async ({ email, password }) => {
         const user = response.data;
         localStorage.setItem("id", user.id);
         localStorage.setItem("role", user.role);
+        localStorage.setitem("name", user.name)
         if (user.name) localStorage.setItem("name", user.name);
         localStorage.setItem("auth_user", JSON.stringify(user));
         return user;
@@ -41,12 +44,13 @@ export const login = async ({ email, password }) => {
     throw new Error(response.message || "No se pudo iniciar sesión");
 };
 
-export function getCurrentUser() {
+// Fetch to get current user
+export const getCurrentUser = () => {
     try {
         const raw = localStorage.getItem("auth_user");
         if (raw) return JSON.parse(raw);
     } catch {
-        // Ignorar errores de parseo
+        // ignore parse error
     }
     const name = localStorage.getItem("name");
     const id = localStorage.getItem("id");
@@ -54,12 +58,14 @@ export function getCurrentUser() {
     return id ? { id, name, role } : null;
 }
 
-export function logout() {
+// Logout function
+export const logout = () => {
     localStorage.clear();
     window.location.href = "/"
 }
 
-export async function getTechnicians() {
+// Get all technicians
+export const getTechnicians = async() => {
     const response = await apiRequest("/users?role=técnico&status=activo&limit=100");
     return response.data ?? [];
 }

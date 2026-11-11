@@ -6,6 +6,7 @@ import Orders from "./views/Orders";
 import OrderDetail from "./views/OrderDetail";
 import Inventory from "./views/Inventory";
 import Customers from "./views/Customers";
+import CustomerDetail from "./views/CustomerDetail";
 import Employees from "./views/Employees";
 import NotFound from "./views/NotFound";
 
@@ -26,6 +27,7 @@ const Layout = () => {
           <Route path="/orders/:orderId" element={<OrderDetail />} />
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/customers" element={<Customers />} />
+          <Route path="/customers/:customerId" element={<CustomerDetail />} />
           <Route path="/employees" element={<Employees />} />
         </Route>
         <Route path="*" element={<NotFound />} />

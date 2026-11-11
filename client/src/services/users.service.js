@@ -30,7 +30,7 @@ export const STATUS_STYLES = {
     inactivo: "border-zinc-200 bg-zinc-100 text-zinc-600",
 };
 
-// obtener todos los usuarios
+// get all users
 export const getUsers = async(filters = {}) => {
     const params = new URLSearchParams({ limit: "100" });
     Object.entries(filters).forEach(([key, value]) => {
@@ -41,7 +41,7 @@ export const getUsers = async(filters = {}) => {
     return response.data ?? [];
 }
 
-// crear usuario
+// create users
 export const createUser = async(payload) => {
     const response = await apiRequest("/users", {
         method: "POST",
@@ -50,7 +50,7 @@ export const createUser = async(payload) => {
     return response.data;
 }
 
-// actualiza usuario
+// update users
 export const updateUser = async(id, payload) => {
     const cleanPayload = { ...payload };
     delete cleanPayload.id;
@@ -65,7 +65,7 @@ export const updateUser = async(id, payload) => {
     return response.data;
 }
 
-// elimina usuario
+// delete users
 export const deleteUser = async(id) => {
     return apiRequest(`/users/${id}`, {
         method: "DELETE",

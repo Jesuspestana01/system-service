@@ -28,7 +28,7 @@ import { orders, ORDER_STATUS_STYLES } from "@/data/orders";
 import { formatDate } from "@/lib/format";
 
 // TODO [BACKEND - GET /api/auth/me]: obtener el nombre del usuario autenticado desde la sesión (`User.name`)
-const userName = "Jesús";
+const userName = localStorage.getItem("name")
 
 // TODO [BACKEND - GET /api/dashboard/summary]:
 // Reemplazar `stat` por contadores reales desde el backend (`ServiceOrder.count`, `Client.count`, `Inventory.count`).
@@ -38,7 +38,7 @@ const cardsContent = [
         description: "Órdenes de servicio",
         url: "/orders",
         icon: Wrench,
-        stat: "12 órdenes abiertas",
+        stat: "6 órdenes abiertas",
         color: "bg-blue-500/10 text-blue-600",
     },
     {
@@ -46,7 +46,7 @@ const cardsContent = [
         description: "Todos los clientes",
         url: "/customers",
         icon: Users,
-        stat: "248 clientes registrados",
+        stat: "6 clientes registrados",
         color: "bg-emerald-500/10 text-emerald-600",
     },
     {
@@ -54,7 +54,7 @@ const cardsContent = [
         description: "Productos inventariados",
         url: "/inventory",
         icon: Package,
-        stat: "5 productos con stock bajo",
+        stat: "8 productos con stock bajo",
         color: "bg-amber-500/10 text-amber-600",
     },
 ];

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Mail, Phone, Plus, UserCheck, UserPlus, Users } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Eye, Mail, Phone, Plus, UserCheck, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -26,6 +27,8 @@ import { customers as initialCustomers } from "@/data/customers";
 const isThisMonth = (isoDate) => isoDate?.slice(0, 7) === todayISO().slice(0, 7);
 
 const Customers = () => {
+    const navigate = useNavigate();
+
     // TODO [BACKEND - GET /api/clients]:
     // Reemplazar `initialCustomers` cargando `getCustomers()` desde `src/services/customers.service.js`.
     // Para crear, editar y eliminar, usar `createCustomer`, `updateCustomer` y `deleteCustomer` contra el modelo `Client`.
@@ -107,7 +110,13 @@ const Customers = () => {
                                                 {getInitials(customer.name)}
                                             </div>
                                             <div>
-                                                <div className="font-medium">{customer.name}</div>
+                                                <Link
+                                                    to={`/customers/${customer.id}`}
+                                                    state={{ customer }}
+                                                    className="font-medium underline-offset-4 hover:underline"
+                                                >
+                                                    {customer.name}
+                                                </Link>
                                                 <div className="text-xs text-muted-foreground">{customer.email || "Sin correo"}</div>
                                             </div>
                                         </div>
@@ -115,10 +124,22 @@ const Customers = () => {
                                     <TableCell>{customer.document}</TableCell>
                                     <TableCell className="text-muted-foreground">{customer.phone}</TableCell>
                                     <TableCell className="max-w-48 truncate text-muted-foreground">{customer.address || "—"}</TableCell>
-                                    <TableCell className="text-center font-medium">{customer.ordersCount}</TableCell>
+                                    <TableCell className="text-center font-medium">
+                                        <Link
+                                            to={`/customers/${customer.id}`}
+                                            state={{ customer }}
+                                            className="text-primary underline-offset-4 hover:underline"
+                                        >
+                                            {customer.ordersCount}
+                                        </Link>
+                                    </TableCell>
                                     <TableCell className="text-muted-foreground">{formatDate(customer.createdAt)}</TableCell>
                                     <TableCell>
                                         <RowActions onEdit={() => crud.openEdit(customer)} onDelete={() => crud.requestDelete(customer)}>
+                                            <DropdownMenuItem onClick={() => navigate(`/customers/${customer.id}`, { state: { customer } })}>
+                                                <Eye />
+                                                Ver historial de órdenes
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => window.open(`tel:${customer.phone}`)}>
                                                 <Phone />
                                                 Llamar

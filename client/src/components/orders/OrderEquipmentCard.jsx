@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Calendar, Hash, Laptop, Pencil, Phone, User, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -96,7 +97,16 @@ export function OrderEquipmentCard({ order, customer, onEditEquipment }) {
                         <User className="size-3.5" />
                         Cliente
                     </p>
-                    <p className="font-semibold">{order.customer}</p>
+                    {order.customerId ? (
+                        <Link
+                            to={`/customers/${order.customerId}`}
+                            className="font-semibold underline-offset-4 hover:underline"
+                        >
+                            {order.customer}
+                        </Link>
+                    ) : (
+                        <p className="font-semibold">{order.customer}</p>
+                    )}
                     {customer && (
                         <div className="space-y-0.5 text-xs text-muted-foreground">
                             <p>{customer.document}</p>
