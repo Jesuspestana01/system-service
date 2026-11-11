@@ -67,9 +67,9 @@ const ServiceOrder = sequelize.define(
       allowNull: true,
     },
     status: { // estado actual de la orden
-      type: DataTypes.ENUM('recibido', 'en revisión', 'en reparación', 'pendiente', 'resuelto', 'entregado', 'cancelado'),
+      type: DataTypes.ENUM('Recibido', 'En diagnóstico', 'En reparación', 'Entregado', 'Listo'),
       allowNull: false,
-      defaultValue: 'recibido',
+      defaultValue: 'Recibido',
     },
     priority: { // prioridad de la solicitud
       type: DataTypes.ENUM('baja', 'media', 'alta', 'urgente'),

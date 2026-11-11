@@ -10,8 +10,12 @@ import { apiRequest } from "@/services/api";
 
 // TODO [BACKEND - GET /api/orders]:
 // Listar órdenes con `include: ['client', 'equipment', 'assignedTechnicianUser']` para `Orders.jsx` y `Main.jsx`.
-export function getOrders() {
+export const getOrders = () => {
     return apiRequest("/orders");
+}
+
+export const getLastOrders = () => {
+    return apiRequest("/service-orders?limit=5")
 }
 
 // TODO [BACKEND - GET /api/orders/:id]:

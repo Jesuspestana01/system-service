@@ -1,7 +1,7 @@
 // Main imports ES MODULE
 import express from 'express';
 import cors from 'cors';
-import { sequelize } from '../index.js';
+import { sequelize, syncDatabase } from '../index.js';
 
 // Routes
 import userRoutes from './userRoutes.js';
@@ -52,10 +52,11 @@ sequelize
   .authenticate()
   .then(() => {
     console.log('Connection success');
-    return sequelize.sync();
+    console.log('Synchronizing Database Models with Neon DB (alter: true)...');
+    return syncDatabase();
   })
   .then(() => {
-    console.log('Synchronizing Database Models');
+    console.log('Database Models synchronized successfully');
     app.listen(port, () => {
       console.log(`Server is being listen on http://localhost:${port}`);
     });

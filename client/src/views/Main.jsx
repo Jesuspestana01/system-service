@@ -18,18 +18,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AppHeader } from "@/components/layout/AppHeader";
-import { orders, ORDER_STATUS_STYLES } from "@/data/orders";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ORDER_STATUS_STYLES } from "@/data/orders";
 import { formatDate } from "@/lib/format";
 import { useEffect, useState } from "react";
 import { apiRequest } from "@/services/api";
 import { DashboardSummary } from "@/services/dashboard.service";
+import { getLastOrders } from "@/services/orders.service";
 
-// TODO [BACKEND - GET /api/dashboard/summary]:
-// Reemplazar `stat` por contadores reales desde el backend (`ServiceOrder.count`, `Client.count`, `Inventory.count`).
-
-// TODO [BACKEND - GET /api/orders?limit=5]: cargar las últimas 5 órdenes de servicio reales
-const recentOrders = orders.slice(0, 5);
-
+// Greeting helper based on current hour
 const getGreeting = () => {
   const hour = new Date().getHours();
   if (hour < 12) return "Buenos días";
@@ -38,20 +35,43 @@ const getGreeting = () => {
 };
 
 const Main = () => {
+  // User role and name state from localStorage
   const isAdmin = localStorage.getItem("role") === "administrador";
   const [userName, setUserName] = useState(() => {
     const stored = localStorage.getItem("name");
     return stored && stored !== "undefined" ? stored : "";
   });
 
+  // Fetch last 5 service orders
+  const [lastOrders, setLastOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  useEffect(() => {
+    const fetchLastOrders = async () => {
+      setLoadingOrders(true);
+      try {
+        const data = await getLastOrders();
+        if (data?.data) {
+          setLastOrders(data.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch last 5 orders:", error);
+      } finally {
+        setLoadingOrders(false);
+      }
+    };
+    fetchLastOrders();
+  }, []);
+
+  // Fetch dashboard summary counters
   const [stats, setStats] = useState({
     orders: 0,
     customers: 0,
     inventory: 0,
   });
-
+  const [loadingSummary, setLoadingSummary] = useState(true);
   useEffect(() => {
     const fetchSummary = async () => {
+      setLoadingSummary(true);
       try {
         const data = await DashboardSummary();
         if (data) {
@@ -62,13 +82,16 @@ const Main = () => {
           });
         }
       } catch (error) {
-        console.error("Error en vista dashboard:", error);
+        console.error("Failed to fetch summary:", error);
+      } finally {
+        setLoadingSummary(false);
       }
     };
 
     fetchSummary();
   }, []);
 
+  // Fallback fetch for current user name if missing
   useEffect(() => {
     const userId = localStorage.getItem("id");
     if (!userName && userId) {
@@ -83,6 +106,7 @@ const Main = () => {
     }
   }, [userName]);
 
+  // Quick-access summary cards config
   const cardsContent = [
     {
       title: "Órdenes",
@@ -110,6 +134,7 @@ const Main = () => {
     },
   ];
 
+  // Formatted current date
   const today = new Date().toLocaleDateString("es", {
     weekday: "long",
     day: "numeric",
@@ -119,6 +144,7 @@ const Main = () => {
 
   return (
     <>
+      {/* Top navigation header (admin button visible only to admins) */}
       <AppHeader>
         {isAdmin && (
           <Button
@@ -132,6 +158,7 @@ const Main = () => {
         )}
       </AppHeader>
       <main className="mx-auto w-full max-w-5xl space-y-10 px-4 py-12">
+        {/* Date and user greeting */}
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground first-letter:uppercase">
             {today}
@@ -143,6 +170,7 @@ const Main = () => {
           <p className="text-muted-foreground">¿Qué quieres gestionar hoy?</p>
         </div>
 
+        {/* Summary cards grid */}
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {cardsContent.map((content) => {
             const Icon = content.icon;
@@ -162,11 +190,16 @@ const Main = () => {
                       {content.description}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="text-sm font-medium">
-                    <span className="relative">
-                      {content.stat}
-                      <ArrowRight className="absolute top-1/2 -right-5 size-4 -translate-y-1/2 opacity-0 transition-all group-hover:-right-6 group-hover:opacity-100" />
-                    </span>
+                  <CardContent className="flex min-h-5 items-center justify-center text-sm font-medium">
+                    {/* Skeleton while loading summary, smooth fade-in when ready */}
+                    {loadingSummary ? (
+                      <Skeleton className="h-5 w-40 rounded-md" />
+                    ) : (
+                      <span className="relative animate-in fade-in duration-500">
+                        {content.stat}
+                        <ArrowRight className="absolute top-1/2 -right-5 size-4 -translate-y-1/2 opacity-0 transition-all group-hover:-right-6 group-hover:opacity-100" />
+                      </span>
+                    )}
                   </CardContent>
                 </Card>
               </Link>
@@ -174,6 +207,7 @@ const Main = () => {
           })}
         </div>
 
+        {/* Recent 5 orders table */}
         <Card className="shadow-xs">
           <CardHeader className="grid-cols-[1fr_auto] items-center">
             <div>
@@ -206,33 +240,74 @@ const Main = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">
-                      <Link
-                        to={`/orders/${order.id}`}
-                        className="text-primary underline-offset-4 hover:underline"
-                      >
-                        {order.id}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{order.customer}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {order.device}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={ORDER_STATUS_STYLES[order.status]}
-                      >
-                        {order.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {formatDate(order.receivedAt)}
+                {/* Loading skeleton rows */}
+                {loadingOrders ? (
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={`skeleton-${index}`}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-32" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-36" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-24 rounded-full" />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Skeleton className="ml-auto h-4 w-20" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : Array.isArray(lastOrders) && lastOrders.length > 0 ? (
+                  /* Loaded order rows */
+                  lastOrders.map((order, index) => (
+                    <TableRow
+                      key={order?.id ?? index}
+                      className="animate-in fade-in duration-500"
+                    >
+                      <TableCell className="font-medium">
+                        <Link
+                          to={`/orders/${order?.orderNumber ?? ""}`}
+                          className="text-primary underline-offset-4 hover:underline"
+                        >
+                          {order?.orderNumber ?? "—"}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        {`${order?.client?.name ?? ""} ${order?.client?.lastName ?? ""}`.trim() ||
+                          "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {`${order?.equipment?.deviceType ?? ""} ${order?.equipment?.model ?? ""}`.trim() ||
+                          "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={ORDER_STATUS_STYLES?.[order?.status] ?? ""}
+                        >
+                          {order?.status ?? "—"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {formatDate(order?.receivedAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  /* Empty state row */
+                  <TableRow className="animate-in fade-in duration-500">
+                    <TableCell
+                      colSpan={5}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      No hay órdenes recientes registradas.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>

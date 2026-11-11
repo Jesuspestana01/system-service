@@ -61,4 +61,34 @@ if (!sequelize) {
   }
 }
 
-export { sequelize };
+const syncDatabase = async () => {
+  if (sequelize.getDialect() === 'postgres') {
+    for (const model of Object.values(sequelize.models)) {
+      const tableName = model.getTableName();
+      for (const [attrName, attr] of Object.entries(model.rawAttributes)) {
+        if (attr.type?.key === 'ENUM' && Array.isArray(attr.type.values)) {
+          const fieldName = attr.field || attrName;
+          const enumName = `enum_${tableName}_${fieldName}`;
+
+          const [typeExists] = await sequelize.query(
+            `SELECT 1 FROM pg_type WHERE typname = :enumName`,
+            { replacements: { enumName } }
+          );
+
+          if (typeExists.length > 0) {
+            for (const val of attr.type.values) {
+              const escapedVal = String(val).replace(/'/g, "''");
+              await sequelize.query(
+                `ALTER TYPE "${enumName}" ADD VALUE IF NOT EXISTS '${escapedVal}';`
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return sequelize.sync({ alter: true });
+};
+
+export { sequelize, syncDatabase };
