@@ -26,10 +26,8 @@ import {
 import { AppHeader } from "@/components/layout/AppHeader";
 import { orders, ORDER_STATUS_STYLES } from "@/data/orders";
 import { formatDate } from "@/lib/format";
-
-// TODO [BACKEND - GET /api/auth/me]: obtener el nombre del usuario autenticado desde la sesión (`User.name`)
-const userName = localStorage.getItem("name")
-console.log(userName)
+import { useEffect, useState } from "react";
+import { apiRequest } from "@/services/api";
 
 // TODO [BACKEND - GET /api/dashboard/summary]:
 // Reemplazar `stat` por contadores reales desde el backend (`ServiceOrder.count`, `Client.count`, `Inventory.count`).
@@ -72,6 +70,24 @@ const getGreeting = () => {
 
 const Main = () => {
     const isAdmin = localStorage.getItem("role") === "administrador";
+    const [userName, setUserName] = useState(() => {
+        const stored = localStorage.getItem("name");
+        return stored && stored !== "undefined" ? stored : "";
+    });
+
+    useEffect(() => {
+        const userId = localStorage.getItem("id");
+        if (!userName && userId) {
+            apiRequest(`/users/${userId}`)
+                .then((res) => {
+                    if (res?.data?.name) {
+                        localStorage.setItem("name", res.data.name);
+                        setUserName(res.data.name);
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [userName]);
 
     const today = new Date().toLocaleDateString("es", {
         weekday: "long",
@@ -95,7 +111,7 @@ const Main = () => {
                 <div className="space-y-1">
                     <p className="text-sm text-muted-foreground first-letter:uppercase">{today}</p>
                     <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-                        {getGreeting()}, {userName}
+                        {getGreeting()}{userName ? `, ${userName}` : ""}
                     </h1>
                     <p className="text-muted-foreground">¿Qué quieres gestionar hoy?</p>
                 </div>

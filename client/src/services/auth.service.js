@@ -32,11 +32,27 @@ export const login = async ({ email, password }) => {
     });
 
     if (response.status === "ok" || response.success) {
-        const user = response.data;
+        const user = { ...response.data };
+
+        if (!user.name && user.id) {
+            try {
+                const profileResponse = await apiRequest(`/users/${user.id}`);
+                if (profileResponse?.data?.name) {
+                    user.name = profileResponse.data.name;
+                    user.lastName = profileResponse.data.lastName;
+                }
+            } catch {
+                // ignore fallback error
+            }
+        }
+
         localStorage.setItem("id", user.id);
         localStorage.setItem("role", user.role);
-        localStorage.setItem("name", user.name)
-        if (user.name) localStorage.setItem("name", user.name);
+        if (user.name) {
+            localStorage.setItem("name", user.name);
+        } else {
+            localStorage.removeItem("name");
+        }
         localStorage.setItem("auth_user", JSON.stringify(user));
         return user;
     }
