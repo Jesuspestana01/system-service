@@ -22,6 +22,7 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Table,
     TableBody,
@@ -40,6 +41,7 @@ import { clampPercent, formatCurrency } from "@/lib/format";
 export function OrderBillingCard({
     billing = { discountPercent: 0, items: [] },
     products = [],
+    loading = false,
     onAddItem,
     onUpdateItem,
     onRemoveItem,
@@ -121,12 +123,23 @@ export function OrderBillingCard({
                     </CardDescription>
                     <CardAction className="flex flex-wrap gap-2">
                         {onCreateInventoryProduct && (
-                            <Button type="button" variant="outline" size="sm" onClick={() => setNewProductDialogOpen(true)}>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={loading}
+                                onClick={() => setNewProductDialogOpen(true)}
+                            >
                                 <Package />
                                 Crear repuesto
                             </Button>
                         )}
-                        <Button type="button" size="sm" onClick={() => setServiceDialogOpen(true)}>
+                        <Button
+                            type="button"
+                            size="sm"
+                            disabled={loading}
+                            onClick={() => setServiceDialogOpen(true)}
+                        >
                             <Wrench />
                             Agregar servicio / cargo
                         </Button>
@@ -134,13 +147,18 @@ export function OrderBillingCard({
                 </CardHeader>
 
                 <CardContent className="space-y-5 pt-4">
-                    {/* Selector rápido para agregar desde el inventario existente */}
+                    {/* quick selector to add items from inventory */}
                     <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3 sm:flex-row sm:items-center">
                         <span className="text-xs font-medium text-muted-foreground sm:shrink-0">
                             Usar del inventario:
                         </span>
-                        {productOptions.length > 0 ? (
-                            <>
+                        {loading ? (
+                            <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
+                                <Skeleton className="h-8 flex-1 rounded-md" />
+                                <Skeleton className="h-8 w-36 rounded-md" />
+                            </div>
+                        ) : productOptions.length > 0 ? (
+                            <div className="animate-in fade-in duration-500 flex flex-1 flex-col gap-2 sm:flex-row sm:items-center">
                                 <SimpleSelect
                                     options={productOptions}
                                     value={activeProductId}
@@ -151,15 +169,15 @@ export function OrderBillingCard({
                                     <Plus />
                                     Agregar a la orden
                                 </Button>
-                            </>
+                            </div>
                         ) : (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="animate-in fade-in duration-500 text-xs text-muted-foreground">
                                 No hay productos con stock disponible. Puedes crear uno nuevo con &ldquo;Crear repuesto&rdquo;.
                             </p>
                         )}
                     </div>
 
-                    {/* Tabla de líneas a cobrar */}
+                    {/* billing lines table */}
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -172,108 +190,144 @@ export function OrderBillingCard({
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {billing.items.length === 0 && (
-                                <EmptyTableRow
-                                    colSpan={6}
-                                    message="Aún no hay repuestos ni servicios cargados en esta orden."
-                                />
-                            )}
-                            {billing.items.map((item) => {
-                                const lineGross = item.quantity * item.unitPrice;
-                                const lineNet = lineGross * (1 - (Number(item.discountPercent) || 0) / 100);
-                                return (
-                                    <TableRow key={item.id}>
+                            {loading ? (
+                                Array.from({ length: 2 }).map((_, idx) => (
+                                    <TableRow key={`billing-skeleton-${idx}`}>
                                         <TableCell>
-                                            <div className="font-medium">{item.name}</div>
-                                            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                                                <Badge variant="outline" className="h-4 px-1.5 text-[10px]">
-                                                    {item.type === "inventory" ? "Inventario" : "Servicio"}
-                                                </Badge>
-                                                <span className="font-mono">{item.code}</span>
+                                            <div className="space-y-1.5">
+                                                <Skeleton className="h-4 w-44" />
+                                                <Skeleton className="h-3.5 w-28" />
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <Input
-                                                type="number"
-                                                min="1"
-                                                aria-label={`Cantidad de ${item.name}`}
-                                                value={item.quantity}
-                                                onChange={(e) =>
-                                                    onUpdateItem(item.id, {
-                                                        quantity: Math.max(1, Number(e.target.value) || 1),
-                                                    })
-                                                }
-                                                className="h-7 px-1.5 text-center tabular-nums"
-                                            />
+                                            <Skeleton className="mx-auto h-7 w-16 rounded-md" />
                                         </TableCell>
                                         <TableCell>
-                                            <Input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                aria-label={`Precio unitario de ${item.name}`}
-                                                value={item.unitPrice}
-                                                onChange={(e) =>
-                                                    onUpdateItem(item.id, {
-                                                        unitPrice: Math.max(0, Number(e.target.value) || 0),
-                                                    })
-                                                }
-                                                className="h-7 px-2 text-right tabular-nums"
-                                            />
+                                            <Skeleton className="ml-auto h-7 w-24 rounded-md" />
                                         </TableCell>
                                         <TableCell>
-                                            <Input
-                                                type="number"
-                                                min="0"
-                                                max="100"
-                                                aria-label={`Descuento en % para ${item.name}`}
-                                                value={item.discountPercent}
-                                                onChange={(e) =>
-                                                    onUpdateItem(item.id, {
-                                                        discountPercent: clampPercent(e.target.value),
-                                                    })
-                                                }
-                                                className="h-7 px-2 text-right tabular-nums"
-                                            />
+                                            <Skeleton className="ml-auto h-7 w-20 rounded-md" />
                                         </TableCell>
-                                        <TableCell className="text-right font-medium tabular-nums">
-                                            <div>{formatCurrency(lineNet)}</div>
-                                            {item.discountPercent > 0 && (
-                                                <div className="text-[11px] text-muted-foreground line-through">
-                                                    {formatCurrency(lineGross)}
-                                                </div>
-                                            )}
+                                        <TableCell className="text-right">
+                                            <Skeleton className="ml-auto h-4 w-16" />
                                         </TableCell>
                                         <TableCell>
-                                            {onRemoveItem && (
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon-xs"
-                                                    aria-label={`Quitar ${item.name}`}
-                                                    className="text-muted-foreground hover:text-destructive"
-                                                    onClick={() => onRemoveItem(item.id)}
-                                                >
-                                                    <Trash2 />
-                                                </Button>
-                                            )}
+                                            <Skeleton className="h-6 w-6 rounded-md" />
                                         </TableCell>
                                     </TableRow>
-                                );
-                            })}
+                                ))
+                            ) : (
+                                <>
+                                    {billing.items.length === 0 && (
+                                        <EmptyTableRow
+                                            colSpan={6}
+                                            message="Aún no hay repuestos ni servicios cargados en esta orden."
+                                        />
+                                    )}
+                                    {billing.items.map((item) => {
+                                        const lineGross = item.quantity * item.unitPrice;
+                                        const lineNet = lineGross * (1 - (Number(item.discountPercent) || 0) / 100);
+                                        return (
+                                            <TableRow key={item.id} className="animate-in fade-in duration-500">
+                                                <TableCell>
+                                                    <div className="font-medium">{item.name}</div>
+                                                    <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                        <Badge variant="outline" className="h-4 px-1.5 text-[10px]">
+                                                            {item.type === "inventory" ? "Inventario" : "Servicio"}
+                                                        </Badge>
+                                                        <span className="font-mono">{item.code}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Input
+                                                        type="number"
+                                                        min="1"
+                                                        aria-label={`Cantidad de ${item.name}`}
+                                                        value={item.quantity}
+                                                        onChange={(e) =>
+                                                            onUpdateItem(item.id, {
+                                                                quantity: Math.max(1, Number(e.target.value) || 1),
+                                                            })
+                                                        }
+                                                        className="h-7 px-1.5 text-center tabular-nums"
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        aria-label={`Precio unitario de ${item.name}`}
+                                                        value={item.unitPrice}
+                                                        onChange={(e) =>
+                                                            onUpdateItem(item.id, {
+                                                                unitPrice: Math.max(0, Number(e.target.value) || 0),
+                                                            })
+                                                        }
+                                                        className="h-7 px-2 text-right tabular-nums"
+                                                    />
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        aria-label={`Descuento en % para ${item.name}`}
+                                                        value={item.discountPercent}
+                                                        onChange={(e) =>
+                                                            onUpdateItem(item.id, {
+                                                                discountPercent: clampPercent(e.target.value),
+                                                            })
+                                                        }
+                                                        className="h-7 px-2 text-right tabular-nums"
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="text-right font-medium tabular-nums">
+                                                    <div>{formatCurrency(lineNet)}</div>
+                                                    {item.discountPercent > 0 && (
+                                                        <div className="text-[11px] text-muted-foreground line-through">
+                                                            {formatCurrency(lineGross)}
+                                                        </div>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {onRemoveItem && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon-xs"
+                                                            aria-label={`Quitar ${item.name}`}
+                                                            className="text-muted-foreground hover:text-destructive"
+                                                            onClick={() => onRemoveItem(item.id)}
+                                                        >
+                                                            <Trash2 />
+                                                        </Button>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </>
+                            )}
                         </TableBody>
                     </Table>
 
-                    {/* Resumen de totales y descuento global */}
+                    {/* totals summary and global discount input */}
                     <div className="flex justify-end">
                         <div className="w-full max-w-sm space-y-2 rounded-lg border bg-muted/20 p-4 text-sm">
                             <div className="flex justify-between text-muted-foreground">
                                 <span>Subtotal bruto</span>
-                                <span className="tabular-nums">{formatCurrency(totals.grossSubtotal)}</span>
+                                {loading ? (
+                                    <Skeleton className="h-4 w-20" />
+                                ) : (
+                                    <span className="animate-in fade-in duration-500 tabular-nums">
+                                        {formatCurrency(totals.grossSubtotal)}
+                                    </span>
+                                )}
                             </div>
 
-                            {totals.lineDiscountTotal > 0 && (
-                                <div className="flex justify-between text-emerald-600">
+                            {!loading && totals.lineDiscountTotal > 0 && (
+                                <div className="animate-in fade-in duration-500 flex justify-between text-emerald-600">
                                     <span>Descuentos por línea</span>
                                     <span className="tabular-nums">−{formatCurrency(totals.lineDiscountTotal)}</span>
                                 </div>
@@ -283,31 +337,39 @@ export function OrderBillingCard({
                                 <label htmlFor="global-discount" className="text-muted-foreground">
                                     Descuento general (%)
                                 </label>
-                                <div className="flex items-center gap-2">
-                                    <Input
-                                        id="global-discount"
-                                        type="number"
-                                        min="0"
-                                        max="100"
-                                        value={billing.discountPercent}
-                                        onChange={(e) => onDiscountChange(clampPercent(e.target.value))}
-                                        className="h-7 w-20 bg-background text-right tabular-nums"
-                                    />
-                                    {totals.globalDiscountAmount > 0 && (
-                                        <span className="text-xs text-emerald-600 tabular-nums">
-                                            (−{formatCurrency(totals.globalDiscountAmount)})
-                                        </span>
-                                    )}
-                                </div>
+                                {loading ? (
+                                    <Skeleton className="h-7 w-20 rounded-md" />
+                                ) : (
+                                    <div className="animate-in fade-in duration-500 flex items-center gap-2">
+                                        <Input
+                                            id="global-discount"
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            value={billing.discountPercent}
+                                            onChange={(e) => onDiscountChange(clampPercent(e.target.value))}
+                                            className="h-7 w-20 bg-background text-right tabular-nums"
+                                        />
+                                        {totals.globalDiscountAmount > 0 && (
+                                            <span className="text-xs text-emerald-600 tabular-nums">
+                                                (−{formatCurrency(totals.globalDiscountAmount)})
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             <Separator />
 
                             <div className="flex items-baseline justify-between pt-1">
                                 <span className="text-base font-semibold">Total a cobrar</span>
-                                <span className="text-2xl font-bold tracking-tight tabular-nums">
-                                    {formatCurrency(totals.total)}
-                                </span>
+                                {loading ? (
+                                    <Skeleton className="h-8 w-28" />
+                                ) : (
+                                    <span className="animate-in fade-in duration-500 text-2xl font-bold tracking-tight tabular-nums">
+                                        {formatCurrency(totals.total)}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>

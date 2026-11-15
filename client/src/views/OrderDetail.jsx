@@ -47,7 +47,7 @@ const OrderDetail = () => {
         const passed = location.state?.order;
         return passed ? withOrderDefaults(mapOrderFromApi(passed)) : null;
     });
-    const [loading, setLoading] = useState(!location.state?.order);
+    const [loading, setLoading] = useState(true);
     const [customers, setCustomers] = useState([]);
     const [products, setProducts] = useState([]);
     const [editEquipmentOpen, setEditEquipmentOpen] = useState(false);
@@ -56,7 +56,7 @@ const OrderDetail = () => {
     useEffect(() => {
         let active = true;
         const loadDetail = async () => {
-            if (!order) setLoading(true);
+            setLoading(true);
             try {
                 const [orderRes, customersRes, productsRes] = await Promise.allSettled([
                     getOrderById(orderId),
@@ -86,27 +86,8 @@ const OrderDetail = () => {
         };
     }, [orderId]);
 
-    // loading skeleton state
-    if (loading) {
-        return (
-            <DashboardLayout>
-                <div className="space-y-6">
-                    <Skeleton className="h-14 w-72" />
-                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
-                        <Skeleton className="h-80 w-full rounded-xl" />
-                        <div className="space-y-6">
-                            <Skeleton className="h-52 w-full rounded-xl" />
-                            <Skeleton className="h-64 w-full rounded-xl" />
-                            <Skeleton className="h-72 w-full rounded-xl" />
-                        </div>
-                    </div>
-                </div>
-            </DashboardLayout>
-        );
-    }
-
-    // not found state when order does not exist
-    if (!order) {
+    // not found state when order does not exist after loading
+    if (!loading && !order) {
         return (
             <DashboardLayout>
                 <Card className="shadow-xs">
@@ -125,10 +106,10 @@ const OrderDetail = () => {
         );
     }
 
-    const targetOrderId = order.dbId ?? order.id;
+    const targetOrderId = order?.dbId ?? order?.id ?? orderId;
     const customer =
-        customers.find((c) => String(c.id) === String(order.customerId)) ??
-        (order.client ? mapCustomerFromApi(order.client) : null);
+        customers.find((c) => String(c.id) === String(order?.customerId)) ??
+        (order?.client ? mapCustomerFromApi(order.client) : null);
 
     // update order status in api
     const handleStatusChange = async (status) => {
@@ -336,16 +317,31 @@ const OrderDetail = () => {
             <PageHeader
                 backTo="/orders"
                 backLabel="Volver a órdenes"
-                title={`Orden ${order.id}`}
-                description={`${order.device} · ${order.customer}`}
+                title={`Orden ${order?.id ?? orderId}`}
+                description={
+                    loading ? (
+                        <Skeleton className="mt-1 h-4 w-48 rounded-md" />
+                    ) : (
+                        <span className="animate-in fade-in duration-500">
+                            {order.device} · {order.customer}
+                        </span>
+                    )
+                }
                 actions={
-                    <>
-                        <Button variant="outline" onClick={() => setEditEquipmentOpen(true)}>
-                            <Pencil />
-                            Editar equipo
-                        </Button>
-                        <OrderStatusDropdown status={order.status} onStatusChange={handleStatusChange} />
-                    </>
+                    loading ? (
+                        <>
+                            <Skeleton className="h-9 w-32 rounded-md" />
+                            <Skeleton className="h-9 w-36 rounded-md" />
+                        </>
+                    ) : (
+                        <div className="animate-in fade-in duration-500 flex items-center gap-2">
+                            <Button variant="outline" onClick={() => setEditEquipmentOpen(true)}>
+                                <Pencil />
+                                Editar equipo
+                            </Button>
+                            <OrderStatusDropdown status={order.status} onStatusChange={handleStatusChange} />
+                        </div>
+                    )
                 }
             />
 
@@ -355,6 +351,7 @@ const OrderDetail = () => {
                     <OrderEquipmentCard
                         order={order}
                         customer={customer}
+                        loading={loading}
                         onEditEquipment={() => setEditEquipmentOpen(true)}
                     />
                 </div>
@@ -362,21 +359,23 @@ const OrderDetail = () => {
                 {/* right column: diagnosis, technician reports and billing */}
                 <div className="space-y-6">
                     <OrderDiagnosisCard
-                        key={`${order.id}-${order.initialDiagnosis?.reportedProblem ?? ""}-${order.initialDiagnosis?.diagnosis ?? ""}`}
-                        initialDiagnosis={order.initialDiagnosis}
+                        initialDiagnosis={order?.initialDiagnosis}
+                        loading={loading}
                         onSave={handleSaveDiagnosis}
                     />
 
                     <OrderReportsCard
-                        reports={order.reports}
-                        defaultTechnician={order.technician}
+                        reports={order?.reports ?? []}
+                        defaultTechnician={order?.technician}
+                        loading={loading}
                         onAddReport={handleAddReport}
                         onDeleteReport={canDelete ? handleDeleteReport : undefined}
                     />
 
                     <OrderBillingCard
-                        billing={order.billing}
+                        billing={order?.billing}
                         products={products}
+                        loading={loading}
                         onAddItem={handleAddBillingItem}
                         onUpdateItem={handleUpdateBillingItem}
                         onRemoveItem={canDelete ? handleRemoveBillingItem : undefined}
@@ -387,14 +386,16 @@ const OrderDetail = () => {
             </div>
 
             {/* modal to edit order equipment and customer */}
-            <OrderFormDialog
-                open={editEquipmentOpen}
-                onOpenChange={setEditEquipmentOpen}
-                order={order}
-                customers={customers}
-                onCreateCustomer={handleCreateCustomer}
-                onSubmit={handleUpdateEquipment}
-            />
+            {order && (
+                <OrderFormDialog
+                    open={editEquipmentOpen}
+                    onOpenChange={setEditEquipmentOpen}
+                    order={order}
+                    customers={customers}
+                    onCreateCustomer={handleCreateCustomer}
+                    onSubmit={handleUpdateEquipment}
+                />
+            )}
         </DashboardLayout>
     );
 };

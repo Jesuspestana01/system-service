@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,14 +10,21 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/format";
 
 // initial diagnosis and reported problem card
-export function OrderDiagnosisCard({ initialDiagnosis, onSave }) {
+export function OrderDiagnosisCard({ initialDiagnosis, loading = false, onSave }) {
     const [reportedProblem, setReportedProblem] = useState(initialDiagnosis?.reportedProblem ?? "");
     const [diagnosis, setDiagnosis] = useState(initialDiagnosis?.diagnosis ?? "");
     const [justSaved, setJustSaved] = useState(false);
+
+    // sync textareas when backend diagnosis loads
+    useEffect(() => {
+        setReportedProblem(initialDiagnosis?.reportedProblem ?? "");
+        setDiagnosis(initialDiagnosis?.diagnosis ?? "");
+    }, [initialDiagnosis?.reportedProblem, initialDiagnosis?.diagnosis]);
 
     const isDirty =
         reportedProblem !== (initialDiagnosis?.reportedProblem ?? "") ||
@@ -42,12 +49,18 @@ export function OrderDiagnosisCard({ initialDiagnosis, onSave }) {
                         Diagnóstico inicial de recepción
                     </CardTitle>
                     <CardDescription>
-                        {initialDiagnosis?.updatedAt
-                            ? `Última actualización: ${formatDateTime(initialDiagnosis.updatedAt)}`
-                            : "Registra la falla reportada y la inspección inicial al recibir el equipo."}
+                        {loading ? (
+                            <Skeleton className="mt-1 h-4 w-56 rounded-md" />
+                        ) : (
+                            <span className="animate-in fade-in duration-500">
+                                {initialDiagnosis?.updatedAt
+                                    ? `Última actualización: ${formatDateTime(initialDiagnosis.updatedAt)}`
+                                    : "Registra la falla reportada y la inspección inicial al recibir el equipo."}
+                            </span>
+                        )}
                     </CardDescription>
                     <CardAction>
-                        <Button type="submit" size="sm" disabled={!isDirty && !justSaved}>
+                        <Button type="submit" size="sm" disabled={loading || (!isDirty && !justSaved)}>
                             {justSaved ? (
                                 <>
                                     <Check />
@@ -64,23 +77,31 @@ export function OrderDiagnosisCard({ initialDiagnosis, onSave }) {
                     <FieldGroup className="grid gap-4 md:grid-cols-2">
                         <Field>
                             <FieldLabel htmlFor="reported-problem">Falla reportada por el cliente</FieldLabel>
-                            <Textarea
-                                id="reported-problem"
-                                value={reportedProblem}
-                                onChange={(e) => setReportedProblem(e.target.value)}
-                                placeholder="Ej: El equipo se cayó, no da imagen o se descarga rápido..."
-                                className="min-h-24"
-                            />
+                            {loading ? (
+                                <Skeleton className="min-h-24 w-full rounded-md" />
+                            ) : (
+                                <Textarea
+                                    id="reported-problem"
+                                    value={reportedProblem}
+                                    onChange={(e) => setReportedProblem(e.target.value)}
+                                    placeholder="Ej: El equipo se cayó, no da imagen o se descarga rápido..."
+                                    className="animate-in fade-in duration-500 min-h-24"
+                                />
+                            )}
                         </Field>
                         <Field>
                             <FieldLabel htmlFor="initial-diagnosis">Inspección / diagnóstico inicial</FieldLabel>
-                            <Textarea
-                                id="initial-diagnosis"
-                                value={diagnosis}
-                                onChange={(e) => setDiagnosis(e.target.value)}
-                                placeholder="Ej: Pantalla sin respuesta táctil, consumo en fuente USB-C normal, Face ID operativo..."
-                                className="min-h-24"
-                            />
+                            {loading ? (
+                                <Skeleton className="min-h-24 w-full rounded-md" />
+                            ) : (
+                                <Textarea
+                                    id="initial-diagnosis"
+                                    value={diagnosis}
+                                    onChange={(e) => setDiagnosis(e.target.value)}
+                                    placeholder="Ej: Pantalla sin respuesta táctil, consumo en fuente USB-C normal, Face ID operativo..."
+                                    className="animate-in fade-in duration-500 min-h-24"
+                                />
+                            )}
                         </Field>
                     </FieldGroup>
                 </CardContent>

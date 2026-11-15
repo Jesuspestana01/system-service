@@ -73,7 +73,7 @@ const CustomerDetail = () => {
         const passed = location.state?.customer;
         return passed ? mapCustomerFromApi(passed) : null;
     });
-    const [loading, setLoading] = useState(!location.state?.customer);
+    const [loading, setLoading] = useState(true);
     const [editOpen, setEditOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
@@ -82,7 +82,7 @@ const CustomerDetail = () => {
     useEffect(() => {
         let active = true;
         const loadCustomerDetail = async () => {
-            if (!customer) setLoading(true);
+            setLoading(true);
             try {
                 const fetched = await getCustomerById(customerId);
                 if (active && fetched) {
@@ -153,8 +153,8 @@ const CustomerDetail = () => {
         }
     };
 
-    // loading skeleton state
-    if (loading) {
+    // loading skeleton state when customer is not yet in state
+    if (loading && !customer) {
         return (
             <DashboardLayout>
                 <div className="space-y-6">
@@ -216,12 +216,14 @@ const CustomerDetail = () => {
                 <StatCard
                     title="Órdenes registradas"
                     value={stats.total}
+                    loading={loading}
                     icon={ClipboardList}
                     color="bg-blue-500/10 text-blue-600"
                 />
                 <StatCard
                     title="En taller"
                     value={stats.active}
+                    loading={loading}
                     hint="Órdenes no entregadas"
                     icon={Wrench}
                     color="bg-amber-500/10 text-amber-600"
@@ -229,6 +231,7 @@ const CustomerDetail = () => {
                 <StatCard
                     title="Completadas"
                     value={stats.completed}
+                    loading={loading}
                     hint="Listas o entregadas"
                     icon={CheckCircle2}
                     color="bg-emerald-500/10 text-emerald-600"
@@ -236,6 +239,7 @@ const CustomerDetail = () => {
                 <StatCard
                     title="Total facturado"
                     value={formatCurrency(stats.totalBilled)}
+                    loading={loading}
                     icon={DollarSign}
                     color="bg-violet-500/10 text-violet-600"
                 />
@@ -333,6 +337,7 @@ const CustomerDetail = () => {
                         <DataToolbar
                             title="Historial de órdenes de servicio"
                             description={`${filteredOrders.length} de ${customerOrders.length} órdenes asociadas a este cliente`}
+                            loading={loading}
                             search={search}
                             onSearchChange={setSearch}
                             searchPlaceholder="Buscar orden, equipo o serial..."
@@ -360,16 +365,33 @@ const CustomerDetail = () => {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredOrders.length === 0 && (
+                                {loading ? (
+                                    Array.from({ length: 4 }).map((_, idx) => (
+                                        <TableRow key={`skeleton-${idx}`}>
+                                            <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                            <TableCell>
+                                                <div className="space-y-1.5">
+                                                    <Skeleton className="h-4 w-36" />
+                                                    <Skeleton className="h-3 w-28" />
+                                                </div>
+                                            </TableCell>
+                                            <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                                            <TableCell><Skeleton className="h-5 w-24 rounded-full" /></TableCell>
+                                            <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                            <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-16" /></TableCell>
+                                            <TableCell className="text-right"><Skeleton className="ml-auto h-6 w-20 rounded-md" /></TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : filteredOrders.length === 0 ? (
                                     <EmptyTableRow
                                         colSpan={7}
                                         message="Este cliente aún no tiene órdenes de servicio registradas."
                                     />
-                                )}
-                                {filteredOrders.map((order) => {
-                                    const orderTotal = getOrderAmount(order);
-                                    return (
-                                        <TableRow key={order.id} className="animate-in fade-in duration-300">
+                                ) : (
+                                    filteredOrders.map((order) => {
+                                        const orderTotal = getOrderAmount(order);
+                                        return (
+                                            <TableRow key={order.id} className="animate-in fade-in duration-500">
                                             <TableCell className="font-medium">
                                                 <Link
                                                     to={`/orders/${order.id}`}
@@ -426,8 +448,9 @@ const CustomerDetail = () => {
                                                 </Button>
                                             </TableCell>
                                         </TableRow>
-                                    );
-                                })}
+                                        );
+                                    })
+                                )}
                             </TableBody>
                         </Table>
                     </CardContent>

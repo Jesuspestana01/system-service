@@ -195,10 +195,10 @@ const Orders = () => {
 
             {/* status counter cards */}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard title="Total de órdenes" value={stats.total} icon={ClipboardList} color="bg-blue-500/10 text-blue-600" />
-                <StatCard title="Recibidas" value={stats.received} hint="Pendientes por revisar" icon={Inbox} color="bg-sky-500/10 text-sky-600" />
-                <StatCard title="En proceso" value={stats.inProgress} hint="Diagnóstico o reparación" icon={Wrench} color="bg-amber-500/10 text-amber-600" />
-                <StatCard title="Listas para entregar" value={stats.ready} icon={CheckCircle2} color="bg-emerald-500/10 text-emerald-600" />
+                <StatCard title="Total de órdenes" value={stats.total} loading={loading} icon={ClipboardList} color="bg-blue-500/10 text-blue-600" />
+                <StatCard title="Recibidas" value={stats.received} loading={loading} hint="Pendientes por revisar" icon={Inbox} color="bg-sky-500/10 text-sky-600" />
+                <StatCard title="En proceso" value={stats.inProgress} loading={loading} hint="Diagnóstico o reparación" icon={Wrench} color="bg-amber-500/10 text-amber-600" />
+                <StatCard title="Listas para entregar" value={stats.ready} loading={loading} icon={CheckCircle2} color="bg-emerald-500/10 text-emerald-600" />
             </div>
 
             {/* orders table card */}
@@ -207,6 +207,7 @@ const Orders = () => {
                     <DataToolbar
                         title="Listado de órdenes"
                         description={`${filteredOrders.length} de ${orders.length} órdenes`}
+                        loading={loading}
                         search={search}
                         onSearchChange={setSearch}
                         searchPlaceholder="Buscar orden, cliente o equipo..."
@@ -250,7 +251,7 @@ const Orders = () => {
                                 <EmptyTableRow colSpan={7} />
                             ) : (
                                 filteredOrders.map((order) => (
-                                    <TableRow key={order.id} className="animate-in fade-in duration-300">
+                                    <TableRow key={order.id} className="animate-in fade-in duration-500">
                                         <TableCell className="font-medium">
                                             <Link
                                                 to={`/orders/${order.id}`}

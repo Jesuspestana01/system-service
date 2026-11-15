@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import {
-    Loader2,
     Plus,
     RefreshCw,
     ShieldCheck,
@@ -13,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
@@ -188,21 +188,18 @@ const Employees = () => {
             )}
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard title="Total de usuarios" value={stats.total} icon={Users} color="bg-blue-500/10 text-blue-600" />
-                <StatCard title="Usuarios activos" value={stats.active} icon={UserCheck} color="bg-emerald-500/10 text-emerald-600" />
-                <StatCard title="Técnicos" value={stats.technicians} icon={Wrench} color="bg-amber-500/10 text-amber-600" />
-                <StatCard title="Administradores" value={stats.admins} icon={ShieldCheck} color="bg-violet-500/10 text-violet-600" />
+                <StatCard title="Total de usuarios" value={stats.total} loading={loading} icon={Users} color="bg-blue-500/10 text-blue-600" />
+                <StatCard title="Usuarios activos" value={stats.active} loading={loading} icon={UserCheck} color="bg-emerald-500/10 text-emerald-600" />
+                <StatCard title="Técnicos" value={stats.technicians} loading={loading} icon={Wrench} color="bg-amber-500/10 text-amber-600" />
+                <StatCard title="Administradores" value={stats.admins} loading={loading} icon={ShieldCheck} color="bg-violet-500/10 text-violet-600" />
             </div>
 
             <Card className="shadow-xs">
                 <CardHeader>
                     <DataToolbar
                         title="Usuarios registrados"
-                        description={
-                            loading
-                                ? "Cargando usuarios de la base de datos..."
-                                : `${filteredUsers.length} de ${users.length} usuarios`
-                        }
+                        description={`${filteredUsers.length} de ${users.length} usuarios`}
+                        loading={loading}
                         search={search}
                         onSearchChange={setSearch}
                         searchPlaceholder="Buscar nombre, usuario o correo..."
@@ -236,44 +233,34 @@ const Employees = () => {
                         </TableHeader>
                         <TableBody>
                             {loading ? (
-                                <>
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="py-10 text-center">
-                                            <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                                                <Loader2 className="size-7 animate-spin text-primary" />
-                                                <span className="text-sm font-medium">
-                                                    Cargando usuarios...
-                                                </span>
+                                Array.from({ length: 5 }).map((_, row) => (
+                                    <TableRow key={`skeleton-${row}`}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Skeleton className="size-9 rounded-full" />
+                                                <div className="space-y-1.5">
+                                                    <Skeleton className="h-4 w-32" />
+                                                    <Skeleton className="h-3 w-40" />
+                                                </div>
                                             </div>
                                         </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-20" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-5 w-24 rounded-full" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-5 w-16 rounded-full" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-24" />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-6 w-6 rounded-md" />
+                                        </TableCell>
                                     </TableRow>
-                                    {[1, 2, 3].map((row) => (
-                                        <TableRow key={row} className="pointer-events-none opacity-50">
-                                            <TableCell>
-                                                <div className="flex items-center gap-3">
-                                                    <div className="size-9 animate-pulse rounded-full bg-muted" />
-                                                    <div className="space-y-1.5">
-                                                        <div className="h-3.5 w-32 animate-pulse rounded bg-muted" />
-                                                        <div className="h-3 w-40 animate-pulse rounded bg-muted/70" />
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="h-3.5 w-20 animate-pulse rounded bg-muted" />
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="h-5 w-24 animate-pulse rounded-full bg-muted" />
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="h-3.5 w-24 animate-pulse rounded bg-muted" />
-                                            </TableCell>
-                                            <TableCell />
-                                        </TableRow>
-                                    ))}
-                                </>
+                                ))
                             ) : (
                                 <>
                                     {filteredUsers.length === 0 && (
@@ -285,7 +272,7 @@ const Employees = () => {
                                     {filteredUsers.map((user) => {
                                         const fullName = `${user.name ?? ""} ${user.lastName ?? ""}`.trim();
                                         return (
-                                            <TableRow key={user.id}>
+                                            <TableRow key={user.id} className="animate-in fade-in duration-500">
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
                                                         <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold">

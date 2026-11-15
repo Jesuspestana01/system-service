@@ -8,7 +8,7 @@ export function AppHeader({ children }) {
 
     const handleLogout = () => {
         logout();
-        navigate("/");
+        navigate("/", { replace: true });
     };
 
     return (

@@ -139,9 +139,9 @@ const Customers = () => {
 
             {/* customer stats cards */}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <StatCard title="Total de clientes" value={stats.total} icon={Users} color="bg-emerald-500/10 text-emerald-600" />
-                <StatCard title="Nuevos este mes" value={stats.newThisMonth} icon={UserPlus} color="bg-blue-500/10 text-blue-600" />
-                <StatCard title="Con órdenes" value={stats.withOrders} hint="Al menos un equipo ingresado" icon={UserCheck} color="bg-violet-500/10 text-violet-600" />
+                <StatCard title="Total de clientes" value={stats.total} loading={loading} icon={Users} color="bg-emerald-500/10 text-emerald-600" />
+                <StatCard title="Nuevos este mes" value={stats.newThisMonth} loading={loading} icon={UserPlus} color="bg-blue-500/10 text-blue-600" />
+                <StatCard title="Con órdenes" value={stats.withOrders} loading={loading} hint="Al menos un equipo ingresado" icon={UserCheck} color="bg-violet-500/10 text-violet-600" />
             </div>
 
             {/* customers table */}
@@ -150,6 +150,7 @@ const Customers = () => {
                     <DataToolbar
                         title="Listado de clientes"
                         description={`${filteredCustomers.length} de ${customers.length} clientes`}
+                        loading={loading}
                         search={search}
                         onSearchChange={setSearch}
                         searchPlaceholder="Buscar cliente, cédula..."
@@ -194,7 +195,7 @@ const Customers = () => {
                                 <EmptyTableRow colSpan={7} />
                             ) : (
                                 filteredCustomers.map((customer) => (
-                                    <TableRow key={customer.id} className="animate-in fade-in duration-300">
+                                    <TableRow key={customer.id} className="animate-in fade-in duration-500">
                                         <TableCell>
                                             <div className="flex items-center gap-3">
                                                 <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold">

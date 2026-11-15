@@ -86,11 +86,10 @@ export const getCurrentUser = () => {
     return id ? { id, name, role } : null;
 }
 
-// Logout function
+// clear user session from localStorage
 export const logout = () => {
     localStorage.clear();
-    window.location.href = "/"
-}
+};
 
 // Get all technicians
 export const getTechnicians = async() => {

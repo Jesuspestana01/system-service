@@ -9,6 +9,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { SimpleSelect } from "@/components/dashboard/SimpleSelect";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { TECHNICIANS } from "@/data/orders";
 import { formatDateTime, getInitials } from "@/lib/format";
@@ -17,7 +18,13 @@ import { getTechnicians } from "@/services/auth.service";
 const fallbackAuthors = TECHNICIANS.filter((t) => t !== "Sin asignar");
 
 // technician reports log card linked to service history
-export function OrderReportsCard({ reports = [], defaultTechnician, onAddReport, onDeleteReport }) {
+export function OrderReportsCard({
+    reports = [],
+    defaultTechnician,
+    loading = false,
+    onAddReport,
+    onDeleteReport,
+}) {
     const [authors, setAuthors] = useState(fallbackAuthors);
     const [author, setAuthor] = useState(
         defaultTechnician && defaultTechnician !== "Sin asignar"
@@ -62,7 +69,7 @@ export function OrderReportsCard({ reports = [], defaultTechnician, onAddReport,
             <CardHeader className="border-b">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
                     <ClipboardPen className="size-4 text-muted-foreground" />
-                    Informes del técnico ({reports.length})
+                    Informes del técnico {!loading && `(${reports.length})`}
                 </CardTitle>
                 <CardDescription>
                     Bitácora cronológica de avances, pruebas y hallazgos durante la revisión.
@@ -71,38 +78,70 @@ export function OrderReportsCard({ reports = [], defaultTechnician, onAddReport,
 
             <CardContent className="space-y-5 pt-4">
                 {/* form to add a new report */}
-                <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border bg-muted/30 p-3">
-                    <Textarea
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        placeholder="Escribe el avance de la revisión (ej: se probó con batería nueva, se midió consumo en línea PPBUS_G3H...)"
-                        className="min-h-20 bg-background"
-                        required
-                    />
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground">Técnico:</span>
-                            <SimpleSelect
-                                options={authors}
-                                value={author}
-                                onValueChange={setAuthor}
-                                className="w-44 bg-background"
-                            />
+                {loading ? (
+                    <div className="space-y-3 rounded-lg border bg-muted/30 p-3">
+                        <Skeleton className="min-h-20 w-full rounded-md" />
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">Técnico:</span>
+                                <Skeleton className="h-8 w-44 rounded-md" />
+                            </div>
+                            <Skeleton className="h-8 w-32 rounded-md" />
                         </div>
-                        <Button type="submit" size="sm" disabled={!note.trim() || submitting}>
-                            <Plus />
-                            {submitting ? "Agregando..." : "Agregar informe"}
-                        </Button>
                     </div>
-                </form>
+                ) : (
+                    <form
+                        onSubmit={handleSubmit}
+                        className="animate-in fade-in duration-500 space-y-3 rounded-lg border bg-muted/30 p-3"
+                    >
+                        <Textarea
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                            placeholder="Escribe el avance de la revisión (ej: se probó con batería nueva, se midió consumo en línea PPBUS_G3H...)"
+                            className="min-h-20 bg-background"
+                            required
+                        />
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground">Técnico:</span>
+                                <SimpleSelect
+                                    options={authors}
+                                    value={author}
+                                    onValueChange={setAuthor}
+                                    className="w-44 bg-background"
+                                />
+                            </div>
+                            <Button type="submit" size="sm" disabled={!note.trim() || submitting}>
+                                <Plus />
+                                {submitting ? "Agregando..." : "Agregar informe"}
+                            </Button>
+                        </div>
+                    </form>
+                )}
 
                 {/* chronological list of reports */}
-                {reports.length === 0 ? (
-                    <p className="py-6 text-center text-sm text-muted-foreground">
+                {loading ? (
+                    <div className="space-y-3">
+                        {Array.from({ length: 2 }).map((_, idx) => (
+                            <div key={`report-skeleton-${idx}`} className="flex gap-3 rounded-lg border p-3">
+                                <Skeleton className="size-8 shrink-0 rounded-full" />
+                                <div className="min-w-0 flex-1 space-y-2">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <Skeleton className="h-4 w-32" />
+                                        <Skeleton className="h-3 w-28" />
+                                    </div>
+                                    <Skeleton className="h-4 w-full" />
+                                    <Skeleton className="h-4 w-3/4" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : reports.length === 0 ? (
+                    <p className="animate-in fade-in duration-500 py-6 text-center text-sm text-muted-foreground">
                         Aún no hay informes técnicos registrados para esta orden.
                     </p>
                 ) : (
-                    <ol className="space-y-3">
+                    <ol className="animate-in fade-in duration-500 space-y-3">
                         {reports.map((report) => (
                             <li
                                 key={report.id}

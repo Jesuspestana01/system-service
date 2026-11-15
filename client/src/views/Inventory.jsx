@@ -184,10 +184,10 @@ const Inventory = () => {
 
             {/* inventory stat cards */}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard title="Productos" value={stats.total} icon={Package} color="bg-blue-500/10 text-blue-600" />
-                <StatCard title="Valor del inventario" value={formatCurrency(stats.value)} icon={DollarSign} color="bg-emerald-500/10 text-emerald-600" />
-                <StatCard title="Stock bajo" value={stats.low} hint="Por debajo del mínimo" icon={AlertTriangle} color="bg-amber-500/10 text-amber-600" />
-                <StatCard title="Agotados" value={stats.out} icon={PackageX} color="bg-red-500/10 text-red-600" />
+                <StatCard title="Productos" value={stats.total} loading={loading} icon={Package} color="bg-blue-500/10 text-blue-600" />
+                <StatCard title="Valor del inventario" value={formatCurrency(stats.value)} loading={loading} icon={DollarSign} color="bg-emerald-500/10 text-emerald-600" />
+                <StatCard title="Stock bajo" value={stats.low} loading={loading} hint="Por debajo del mínimo" icon={AlertTriangle} color="bg-amber-500/10 text-amber-600" />
+                <StatCard title="Agotados" value={stats.out} loading={loading} icon={PackageX} color="bg-red-500/10 text-red-600" />
             </div>
 
             {/* products table */}
@@ -196,6 +196,7 @@ const Inventory = () => {
                     <DataToolbar
                         title="Listado de productos"
                         description={`${filteredProducts.length} de ${products.length} productos`}
+                        loading={loading}
                         search={search}
                         onSearchChange={setSearch}
                         searchPlaceholder="Buscar producto o código..."
@@ -252,7 +253,7 @@ const Inventory = () => {
                                 filteredProducts.map((product) => {
                                     const stockBadge = STOCK_BADGES[getStockStatus(product)];
                                     return (
-                                        <TableRow key={product.id} className="animate-in fade-in duration-300">
+                                        <TableRow key={product.id} className="animate-in fade-in duration-500">
                                             <TableCell className="font-mono font-medium">
                                                 {product.code || product.id}
                                             </TableCell>
