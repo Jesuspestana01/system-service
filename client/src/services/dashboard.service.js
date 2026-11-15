@@ -1,16 +1,32 @@
-import { apiRequest } from "./api"
+import { apiRequest } from "./api";
+import { getProducts } from "./inventory.service";
+import { getStockStatus } from "@/data/inventory";
 
-// Get summary content for dashboard
-export const DashboardSummary = async() => {
+// fetch dashboard summary counters and sync low-stock count with inventory logic
+export const DashboardSummary = async () => {
     try {
-        const response = await apiRequest("/dashboard/summary", {
-            method: 'GET'
-        })
-        if (!response.ok) {
-            console.log("Failed to fetch summary items")
+        const [summaryRes, productsRes] = await Promise.allSettled([
+            apiRequest("/dashboard/summary", { method: "GET" }),
+            getProducts(),
+        ]);
+
+        const count =
+            summaryRes.status === "fulfilled" ? (summaryRes.value?.count ?? {}) : {};
+
+        if (productsRes.status === "fulfilled" && Array.isArray(productsRes.value)) {
+            const lowStockCount = productsRes.value.filter(
+                (p) => getStockStatus(p) === "low" || getStockStatus(p) === "out"
+            ).length;
+            return {
+                orders: count.orders ?? 0,
+                customers: count.customers ?? 0,
+                inventory: lowStockCount,
+            };
         }
-        return response?.count || null
+
+        return count;
     } catch (error) {
-        console.error(error)
+        console.error(error);
+        return null;
     }
-}
+};

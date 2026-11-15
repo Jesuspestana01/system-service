@@ -12,10 +12,9 @@ router.get("/summary", async (req, res) => {
     const { count: inventoryCount } = await Inventory.findAndCountAll({
       where: {
         quantity: {
-          [Op.lt]: sequelize.col("minimumStock"),
+          [Op.lte]: sequelize.col("minimumStock"),
         },
       },
-      limit: 0,
     });
 
     res.status(200).json({
