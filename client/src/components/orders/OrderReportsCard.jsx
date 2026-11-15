@@ -11,11 +11,10 @@ import {
 import { SimpleSelect } from "@/components/dashboard/SimpleSelect";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { TECHNICIANS } from "@/data/orders";
 import { formatDateTime, getInitials } from "@/lib/format";
 import { getTechnicians } from "@/services/auth.service";
 
-const fallbackAuthors = TECHNICIANS.filter((t) => t !== "Sin asignar");
+const NO_TECHNICIANS_LABEL = "Sin técnicos";
 
 // technician reports log card linked to service history
 export function OrderReportsCard({
@@ -25,30 +24,45 @@ export function OrderReportsCard({
     onAddReport,
     onDeleteReport,
 }) {
-    const [authors, setAuthors] = useState(fallbackAuthors);
-    const [author, setAuthor] = useState(
-        defaultTechnician && defaultTechnician !== "Sin asignar"
-            ? defaultTechnician
-            : fallbackAuthors[0]
-    );
+    const [authors, setAuthors] = useState([NO_TECHNICIANS_LABEL]);
+    const [author, setAuthor] = useState(NO_TECHNICIANS_LABEL);
     const [note, setNote] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-    // load active technicians from api for author selector
+    // load active technicians from database for author selector
     useEffect(() => {
         getTechnicians()
             .then((list) => {
-                if (Array.isArray(list) && list.length > 0) {
-                    const names = list.map((u) => `${u.name ?? ""} ${u.lastName ?? ""}`.trim());
+                const names = Array.isArray(list)
+                    ? list
+                          .map((u) =>
+                              `${u.name ?? ""} ${
+                                  u.lastName && u.lastName !== "-" ? u.lastName : ""
+                              }`.trim()
+                          )
+                          .filter(Boolean)
+                    : [];
+
+                if (names.length > 0) {
                     setAuthors(names);
-                    if (defaultTechnician && defaultTechnician !== "Sin asignar" && names.includes(defaultTechnician)) {
+                    if (
+                        defaultTechnician &&
+                        defaultTechnician !== "Sin asignar" &&
+                        names.includes(defaultTechnician)
+                    ) {
                         setAuthor(defaultTechnician);
                     } else {
                         setAuthor(names[0]);
                     }
+                } else {
+                    setAuthors([NO_TECHNICIANS_LABEL]);
+                    setAuthor(NO_TECHNICIANS_LABEL);
                 }
             })
-            .catch(() => {});
+            .catch(() => {
+                setAuthors([NO_TECHNICIANS_LABEL]);
+                setAuthor(NO_TECHNICIANS_LABEL);
+            });
     }, [defaultTechnician]);
 
     // submit new technician report

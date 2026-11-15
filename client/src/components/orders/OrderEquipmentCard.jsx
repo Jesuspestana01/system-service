@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatDate } from "@/lib/format";
+import { formatCedula, formatDate, formatPhone } from "@/lib/format";
 
 // sidebar card showing equipment and customer info
 export function OrderEquipmentCard({ order, customer, loading = false, onEditEquipment }) {
@@ -152,11 +152,11 @@ export function OrderEquipmentCard({ order, customer, loading = false, onEditEqu
                             )}
                             {customer && (
                                 <div className="space-y-0.5 text-xs text-muted-foreground">
-                                    <p>{customer.document}</p>
+                                    <p>{formatCedula(customer.document)}</p>
                                     {customer.phone && (
                                         <p className="flex items-center gap-1">
                                             <Phone className="size-3" />
-                                            {customer.phone}
+                                            {formatPhone(customer.phone)}
                                         </p>
                                     )}
                                     {customer.email && <p>{customer.email}</p>}

@@ -21,7 +21,7 @@ import { RowActions } from "@/components/dashboard/RowActions";
 import { ConfirmDeleteDialog } from "@/components/dashboard/ConfirmDeleteDialog";
 import { EmptyTableRow } from "@/components/dashboard/EmptyTableRow";
 import { CustomerFormDialog } from "@/components/customers/CustomerFormDialog";
-import { formatDate, getInitials, todayISO } from "@/lib/format";
+import { formatCedula, formatDate, formatPhone, getInitials, todayISO } from "@/lib/format";
 import { getRolePermissions } from "@/lib/permissions";
 import {
     createCustomer,
@@ -213,8 +213,8 @@ const Customers = () => {
                                                 </div>
                                             </div>
                                         </TableCell>
-                                        <TableCell>{customer.document}</TableCell>
-                                        <TableCell className="text-muted-foreground">{customer.phone}</TableCell>
+                                        <TableCell>{formatCedula(customer.document)}</TableCell>
+                                        <TableCell className="text-muted-foreground">{formatPhone(customer.phone)}</TableCell>
                                         <TableCell className="max-w-48 truncate text-muted-foreground">{customer.address || "—"}</TableCell>
                                         <TableCell className="text-center font-medium">
                                             <Link

@@ -18,6 +18,7 @@ import { SimpleSelect } from "@/components/dashboard/SimpleSelect";
 import { CustomerFormDialog } from "@/components/customers/CustomerFormDialog";
 import { DEFAULT_ORDER_STATUS, ORDER_STATUS_STYLES } from "@/data/orders";
 import { APPLE_DEVICE_TYPES, getModelsByType, getSerialPlaceholder } from "@/data/apple-devices";
+import { formatCedula } from "@/lib/format";
 import { getTechnicians } from "@/services/auth.service";
 
 // modal dialog to create an order or edit equipment details
@@ -80,14 +81,14 @@ function OrderForm({ order, customers, onCreateCustomer, onSubmit }) {
 
     const customerOptions = customers.map((customer) => ({
         value: String(customer.id),
-        label: `${customer.name}${customer.document ? ` · ${customer.document}` : ""}`,
+        label: `${customer.name}${customer.document ? ` · ${formatCedula(customer.document)}` : ""}`,
     }));
 
     const technicianOptions = [
         { value: "none", label: "Sin asignar" },
         ...technicians.map((tech) => ({
             value: String(tech.id),
-            label: `${tech.name ?? ""} ${tech.lastName ?? ""}`.trim(),
+            label: `${tech.name ?? ""} ${tech.lastName && tech.lastName !== "-" ? tech.lastName : ""}`.trim(),
         })),
     ];
 

@@ -40,7 +40,7 @@ import { DataToolbar } from "@/components/dashboard/DataToolbar";
 import { SimpleSelect } from "@/components/dashboard/SimpleSelect";
 import { EmptyTableRow } from "@/components/dashboard/EmptyTableRow";
 import { CustomerFormDialog } from "@/components/customers/CustomerFormDialog";
-import { formatCurrency, formatDate, getInitials } from "@/lib/format";
+import { formatCedula, formatCurrency, formatDate, formatPhone, getInitials } from "@/lib/format";
 import {
     calculateOrderTotals,
     ORDER_STATUSES,
@@ -270,7 +270,7 @@ const CustomerDetail = () => {
                                         <CreditCard className="size-3.5" />
                                         Cédula / RIF
                                     </dt>
-                                    <dd className="font-medium">{customer.document}</dd>
+                                    <dd className="font-medium">{formatCedula(customer.document)}</dd>
                                 </div>
 
                                 <div className="space-y-0.5">
@@ -283,7 +283,7 @@ const CustomerDetail = () => {
                                             href={`tel:${customer.phone}`}
                                             className="hover:underline"
                                         >
-                                            {customer.phone || "—"}
+                                            {formatPhone(customer.phone)}
                                         </a>
                                     </dd>
                                 </div>
