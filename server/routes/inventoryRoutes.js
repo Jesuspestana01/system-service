@@ -13,6 +13,7 @@ const allowedFields = [
   'quantity',
   'minimumStock',
   'unitPrice',
+  'trackStock',
   'status',
 ];
 
@@ -65,7 +66,11 @@ const normalizeInventoryPayload = (body) => {
   if (payload.brand === undefined && body.supplier !== undefined) {
     payload.brand = String(body.supplier || '').trim() || null;
   }
-  if (payload.quantity !== undefined && !body.status) {
+  if (payload.trackStock === false) {
+    payload.quantity = 0;
+    payload.minimumStock = 0;
+    payload.status = 'disponible';
+  } else if (payload.quantity !== undefined && !body.status) {
     payload.status = Number(payload.quantity) > 0 ? 'disponible' : 'agotado';
   }
 

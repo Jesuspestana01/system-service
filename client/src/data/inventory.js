@@ -1,5 +1,14 @@
 // product categories and stock status helper
-export const PRODUCT_CATEGORIES = ["Pantallas", "Baterías", "Cargadores", "Almacenamiento", "Memorias RAM", "Accesorios", "Otros"];
+export const PRODUCT_CATEGORIES = [
+    "Pantallas",
+    "Baterías",
+    "Cargadores",
+    "Almacenamiento",
+    "Memorias RAM",
+    "Accesorios",
+    "Servicios",
+    "Otros",
+];
 
 export const products = [
     { id: "INV-008", name: "Pantalla iPhone 13 OLED", category: "Pantallas", stock: 3, minStock: 2, price: 120, supplier: "TecnoPartes" },
@@ -12,8 +21,9 @@ export const products = [
     { id: "INV-001", name: "Batería HP Pavilion 15", category: "Baterías", stock: 4, minStock: 2, price: 55, supplier: "TecnoPartes" },
 ];
 
-// "ok" | "low" | "out"
+// "untracked" | "ok" | "low" | "out"
 export const getStockStatus = (product) => {
+    if (product?.trackStock === false) return "untracked";
     if (product.stock <= 0) return "out";
     if (product.stock <= product.minStock) return "low";
     return "ok";

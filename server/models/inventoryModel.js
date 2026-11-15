@@ -45,6 +45,11 @@ const Inventory = sequelize.define(
       allowNull: false,
       defaultValue: 0,
     },
+    trackStock: { // indica si el producto lleva control de stock (false para asesorías/servicios)
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
     status: { // estado del producto en inventario
       type: DataTypes.ENUM('disponible', 'agotado', 'en revisión'),
       allowNull: false,

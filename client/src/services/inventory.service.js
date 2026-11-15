@@ -4,6 +4,7 @@ import { apiRequest } from "@/services/api";
 export const mapProductFromApi = (item) => {
   if (!item) return null;
   const code = item.sku || `INV-${String(item.id).padStart(3, "0")}`;
+  const trackStock = item.trackStock !== false;
   return {
     id: item.id,
     code,
@@ -12,8 +13,9 @@ export const mapProductFromApi = (item) => {
     description: item.description ?? "",
     category: item.category ?? "Otros",
     supplier: item.brand ?? item.supplier ?? "",
-    stock: Number(item.quantity ?? item.stock ?? 0),
-    minStock: Number(item.minimumStock ?? item.minStock ?? 0),
+    trackStock,
+    stock: trackStock ? Number(item.quantity ?? item.stock ?? 0) : 0,
+    minStock: trackStock ? Number(item.minimumStock ?? item.minStock ?? 0) : 0,
     price: Number(item.unitPrice ?? item.price ?? 0),
     status: item.status ?? "disponible",
   };
@@ -21,16 +23,18 @@ export const mapProductFromApi = (item) => {
 
 // build backend inventory payload from ui product fields
 const buildProductPayload = (data, isUpdate = false) => {
-  const quantity = Math.max(0, Number(data.quantity ?? data.stock ?? 0));
+  const trackStock = data.trackStock !== false && data.trackStock !== "false";
+  const quantity = trackStock ? Math.max(0, Number(data.quantity ?? data.stock ?? 0)) : 0;
   const payload = {
     name: String(data.name ?? "").trim(),
     description: data.description ? String(data.description).trim() : null,
     category: String(data.category ?? "Otros").trim(),
     brand: String(data.brand ?? data.supplier ?? "").trim() || "General",
+    trackStock,
     quantity,
-    minimumStock: Math.max(0, Number(data.minimumStock ?? data.minStock ?? 1)),
+    minimumStock: trackStock ? Math.max(0, Number(data.minimumStock ?? data.minStock ?? 1)) : 0,
     unitPrice: Math.max(0, Number(data.unitPrice ?? data.price ?? 0)),
-    status: quantity > 0 ? "disponible" : "agotado",
+    status: !trackStock || quantity > 0 ? "disponible" : "agotado",
   };
 
   if (data.sku) {

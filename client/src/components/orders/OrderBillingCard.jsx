@@ -48,7 +48,7 @@ export function OrderBillingCard({
     onDiscountChange,
     onCreateInventoryProduct,
 }) {
-    const availableProducts = products.filter((p) => p.stock > 0);
+    const availableProducts = products.filter((p) => p.trackStock === false || p.stock > 0);
     const [selectedProductId, setSelectedProductId] = useState(availableProducts[0]?.id ?? "");
     const [serviceDialogOpen, setServiceDialogOpen] = useState(false);
     const [newProductDialogOpen, setNewProductDialogOpen] = useState(false);
@@ -59,7 +59,10 @@ export function OrderBillingCard({
 
     const productOptions = availableProducts.map((p) => ({
         value: p.id,
-        label: `${p.name} · ${formatCurrency(p.price)} (${p.stock} disp.)`,
+        label:
+            p.trackStock === false
+                ? `${p.name} · ${formatCurrency(p.price)} (Sin rastreo)`
+                : `${p.name} · ${formatCurrency(p.price)} (${p.stock} disp.)`,
     }));
 
     const handleAddFromInventory = () => {

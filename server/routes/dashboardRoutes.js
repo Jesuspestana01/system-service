@@ -11,6 +11,7 @@ router.get("/summary", async (req, res) => {
     const { count: customerCount } = await Client.findAndCountAll();
     const { count: inventoryCount } = await Inventory.findAndCountAll({
       where: {
+        trackStock: true,
         quantity: {
           [Op.lte]: sequelize.col("minimumStock"),
         },

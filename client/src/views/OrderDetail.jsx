@@ -233,7 +233,7 @@ const OrderDetail = () => {
         if (item.type === "inventory" && item.inventoryItemId) {
             setProducts((prev) =>
                 prev.map((p) =>
-                    String(p.id) === String(item.inventoryItemId)
+                    String(p.id) === String(item.inventoryItemId) && p.trackStock !== false
                         ? { ...p, stock: Math.max(0, p.stock - item.quantity) }
                         : p
                 )
@@ -297,7 +297,7 @@ const OrderDetail = () => {
         if (removed?.type === "inventory" && removed.inventoryItemId) {
             setProducts((prev) =>
                 prev.map((p) =>
-                    String(p.id) === String(removed.inventoryItemId)
+                    String(p.id) === String(removed.inventoryItemId) && p.trackStock !== false
                         ? { ...p, stock: p.stock + removed.quantity }
                         : p
                 )

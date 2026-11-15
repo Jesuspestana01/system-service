@@ -43,6 +43,7 @@ const stockFilterOptions = [
     { value: "all", label: "Todo el stock" },
     { value: "low", label: "Stock bajo" },
     { value: "out", label: "Agotados" },
+    { value: "untracked", label: "Sin rastreo" },
 ];
 
 // badge styles for stock status
@@ -50,6 +51,7 @@ const STOCK_BADGES = {
     ok: { label: "Disponible", className: "border-emerald-200 bg-emerald-50 text-emerald-700" },
     low: { label: "Stock bajo", className: "border-amber-200 bg-amber-50 text-amber-700" },
     out: { label: "Agotado", className: "border-red-200 bg-red-50 text-red-700" },
+    untracked: { label: "Sin rastreo", className: "border-sky-200 bg-sky-50 text-sky-700" },
 };
 
 const Inventory = () => {
@@ -102,7 +104,10 @@ const Inventory = () => {
     const stats = useMemo(
         () => ({
             total: products.length,
-            value: products.reduce((sum, p) => sum + p.stock * p.price, 0),
+            value: products.reduce(
+                (sum, p) => (p.trackStock === false ? sum : sum + p.stock * p.price),
+                0
+            ),
             low: products.filter((p) => getStockStatus(p) === "low").length,
             out: products.filter((p) => getStockStatus(p) === "out").length,
         }),
@@ -263,32 +268,44 @@ const Inventory = () => {
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">{product.category}</TableCell>
                                             <TableCell>
-                                                {/* quick stock adjustment buttons (admin only) */}
-                                                <div className="flex items-center justify-center gap-1">
-                                                    {isAdmin && (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon-xs"
-                                                            aria-label="Restar 1"
-                                                            disabled={product.stock <= 0}
-                                                            onClick={() => adjustStock(product, -1)}
-                                                        >
-                                                            <Minus />
-                                                        </Button>
-                                                    )}
-                                                    <span className="w-8 text-center font-medium tabular-nums">{product.stock}</span>
-                                                    {isAdmin && (
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon-xs"
-                                                            aria-label="Sumar 1"
-                                                            onClick={() => adjustStock(product, 1)}
-                                                        >
-                                                            <Plus />
-                                                        </Button>
-                                                    )}
-                                                </div>
-                                                <div className="mt-0.5 text-center text-[11px] text-muted-foreground">mín. {product.minStock}</div>
+                                                {product.trackStock === false ? (
+                                                    <div className="text-center text-xs text-muted-foreground">
+                                                        No aplica
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        {/* quick stock adjustment buttons (admin only) */}
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            {isAdmin && (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="icon-xs"
+                                                                    aria-label="Restar 1"
+                                                                    disabled={product.stock <= 0}
+                                                                    onClick={() => adjustStock(product, -1)}
+                                                                >
+                                                                    <Minus />
+                                                                </Button>
+                                                            )}
+                                                            <span className="w-8 text-center font-medium tabular-nums">
+                                                                {product.stock}
+                                                            </span>
+                                                            {isAdmin && (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="icon-xs"
+                                                                    aria-label="Sumar 1"
+                                                                    onClick={() => adjustStock(product, 1)}
+                                                                >
+                                                                    <Plus />
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                        <div className="mt-0.5 text-center text-[11px] text-muted-foreground">
+                                                            mín. {product.minStock}
+                                                        </div>
+                                                    </>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="outline" className={stockBadge.className}>

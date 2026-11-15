@@ -522,15 +522,17 @@ router.post("/:id/items", async (req, res) => {
         await transaction.rollback();
         return res.status(404).json({ success: false, message: "Inventory item not found" });
       }
-      if (Number(inventoryItem.quantity) < quantity) {
-        await transaction.rollback();
-        return res.status(400).json({ success: false, message: "Not enough stock available" });
-      }
+      if (inventoryItem.trackStock !== false) {
+        if (Number(inventoryItem.quantity) < quantity) {
+          await transaction.rollback();
+          return res.status(400).json({ success: false, message: "Not enough stock available" });
+        }
 
-      await inventoryItem.update(
-        { quantity: Number(inventoryItem.quantity) - quantity },
-        { transaction }
-      );
+        await inventoryItem.update(
+          { quantity: Number(inventoryItem.quantity) - quantity },
+          { transaction }
+        );
+      }
 
       // merge quantity if this inventory item is already on the order
       const existing = await UsedPart.findOne({
@@ -617,7 +619,7 @@ router.patch("/:id/items/:itemId", async (req, res) => {
       const delta = nextQty - Number(usedPart.quantity);
       if (delta !== 0) {
         const inventoryItem = await Inventory.findByPk(usedPart.inventoryItemId, { transaction });
-        if (inventoryItem) {
+        if (inventoryItem && inventoryItem.trackStock !== false) {
           if (delta > 0 && Number(inventoryItem.quantity) < delta) {
             await transaction.rollback();
             return res.status(400).json({ success: false, message: "Not enough stock available" });
@@ -682,7 +684,7 @@ router.delete("/:id/items/:itemId", async (req, res) => {
 
     if (usedPart.inventoryItemId) {
       const inventoryItem = await Inventory.findByPk(usedPart.inventoryItemId, { transaction });
-      if (inventoryItem) {
+      if (inventoryItem && inventoryItem.trackStock !== false) {
         await inventoryItem.update(
           { quantity: Number(inventoryItem.quantity) + Number(usedPart.quantity) },
           { transaction }
