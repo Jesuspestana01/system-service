@@ -1,9 +1,92 @@
 import { Router } from 'express';
 import { Op } from 'sequelize';
-import { Equipment, Client, ServiceOrder } from '../models/index.js';
+import { Equipment, Client, ServiceOrder, DeviceModel } from '../models/index.js';
 
 const router = Router();
 const allowedFields = ['clientId', 'deviceType', 'brand', 'model', 'serialNumber', 'color', 'accessories', 'physicalCondition', 'observations'];
+
+// get all registered equipment models grouped by device type
+router.get('/models', async (req, res) => {
+  try {
+    const where = {};
+    if (req.query.deviceType) {
+      where.deviceType = String(req.query.deviceType).trim();
+    }
+    const rows = await DeviceModel.findAll({
+      where,
+      order: [
+        ['deviceType', 'ASC'],
+        ['name', 'ASC'],
+      ],
+    });
+    return res.status(200).json({
+      success: true,
+      data: rows,
+      message: 'Device models retrieved successfully',
+    });
+  } catch (error) {
+    console.error('Error getting device models:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// create a new equipment model under a device type
+router.post('/models', async (req, res) => {
+  try {
+    const deviceType = String(req.body.deviceType ?? '').trim();
+    const name = String(req.body.name ?? '').trim();
+
+    if (!deviceType || !name) {
+      return res.status(400).json({
+        success: false,
+        message: 'deviceType and name are required',
+      });
+    }
+
+    const existing = await DeviceModel.findOne({
+      where: {
+        deviceType,
+        name: { [Op.iLike]: name },
+      },
+    });
+
+    if (existing) {
+      return res.status(200).json({
+        success: true,
+        data: existing,
+        message: 'Device model already exists',
+      });
+    }
+
+    const created = await DeviceModel.create({ deviceType, name });
+    return res.status(201).json({
+      success: true,
+      data: created,
+      message: 'Device model created successfully',
+    });
+  } catch (error) {
+    console.error('Error creating device model:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
+
+// delete an equipment model by id
+router.delete('/models/:id', async (req, res) => {
+  try {
+    const item = await DeviceModel.findByPk(req.params.id);
+    if (!item) {
+      return res.status(404).json({ success: false, message: 'Device model not found' });
+    }
+    await item.destroy();
+    return res.status(200).json({
+      success: true,
+      message: 'Device model deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting device model:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+});
 
 const getPagination = (query) => {
   const limit = Number(query.limit ?? 10);

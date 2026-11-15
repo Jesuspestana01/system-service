@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { CheckCircle2, ClipboardList, Eye, Inbox, Plus, RefreshCw, Wrench } from "lucide-react";
+import { CheckCircle2, ClipboardList, Eye, Inbox, Laptop, Plus, RefreshCw, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -30,6 +30,7 @@ import { RowActions } from "@/components/dashboard/RowActions";
 import { ConfirmDeleteDialog } from "@/components/dashboard/ConfirmDeleteDialog";
 import { EmptyTableRow } from "@/components/dashboard/EmptyTableRow";
 import { OrderFormDialog } from "@/components/orders/OrderFormDialog";
+import { DeviceModelsDialog } from "@/components/orders/DeviceModelsDialog";
 import { formatDate } from "@/lib/format";
 import { getRolePermissions } from "@/lib/permissions";
 import { ORDER_STATUSES, ORDER_STATUS_STYLES } from "@/data/orders";
@@ -41,6 +42,11 @@ import {
     updateOrderStatus,
 } from "@/services/orders.service";
 import { createCustomer, getCustomers } from "@/services/customers.service";
+import {
+    createDeviceModel,
+    deleteDeviceModel,
+    getDeviceModels,
+} from "@/services/equipment.service";
 
 // status filter options for toolbar select
 const statusFilterOptions = [
@@ -53,29 +59,35 @@ const Orders = () => {
     // seller role cannot delete orders; admin and technician have full access
     const { canDelete } = getRolePermissions();
 
-    // orders, customers and ui state
+    // orders, customers, device models and ui state
     const [orders, setOrders] = useState([]);
     const [customers, setCustomers] = useState([]);
+    const [deviceModels, setDeviceModels] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [formState, setFormState] = useState({ open: false, item: null });
+    const [modelsDialogOpen, setModelsDialogOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
 
-    // fetch orders and customers on mount
+    // fetch orders, customers and device models on mount
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
             try {
-                const [ordersResult, customersResult] = await Promise.allSettled([
+                const [ordersResult, customersResult, modelsResult] = await Promise.allSettled([
                     getOrders(),
                     getCustomers(),
+                    getDeviceModels(),
                 ]);
                 if (ordersResult.status === "fulfilled" && Array.isArray(ordersResult.value)) {
                     setOrders(ordersResult.value);
                 }
                 if (customersResult.status === "fulfilled" && Array.isArray(customersResult.value)) {
                     setCustomers(customersResult.value);
+                }
+                if (modelsResult.status === "fulfilled" && Array.isArray(modelsResult.value)) {
+                    setDeviceModels(modelsResult.value);
                 }
             } finally {
                 setLoading(false);
@@ -179,17 +191,45 @@ const Orders = () => {
         return newCustomer;
     };
 
+    // create a new equipment model under a device category (iPhone, MacBook, etc.)
+    const handleCreateDeviceModel = async (payload) => {
+        const created = await createDeviceModel(payload);
+        if (created) {
+            setDeviceModels((prev) => {
+                const exists = prev.some(
+                    (m) =>
+                        m.deviceType === created.deviceType &&
+                        m.name.toLowerCase() === created.name.toLowerCase()
+                );
+                return exists ? prev : [...prev, created];
+            });
+        }
+        return created;
+    };
+
+    // delete an equipment model by id
+    const handleDeleteDeviceModel = async (id) => {
+        await deleteDeviceModel(id);
+        setDeviceModels((prev) => prev.filter((m) => String(m.id) !== String(id)));
+    };
+
     return (
         <DashboardLayout>
-            {/* page title and create order button */}
+            {/* page title, device models button and create order button */}
             <PageHeader
                 title="Órdenes de servicio"
                 description="Gestiona los equipos ingresados y el avance de cada reparación."
                 actions={
-                    <Button onClick={openCreate}>
-                        <Plus />
-                        Nueva orden
-                    </Button>
+                    <>
+                        <Button variant="outline" onClick={() => setModelsDialogOpen(true)}>
+                            <Laptop />
+                            Modelos de equipos
+                        </Button>
+                        <Button onClick={openCreate}>
+                            <Plus />
+                            Nueva orden
+                        </Button>
+                    </>
                 }
             />
 
@@ -324,8 +364,20 @@ const Orders = () => {
                 onOpenChange={(open) => setFormState((prev) => ({ ...prev, open }))}
                 order={formState.item}
                 customers={customers}
+                deviceModels={deviceModels}
                 onCreateCustomer={handleCreateCustomer}
+                onCreateDeviceModel={handleCreateDeviceModel}
+                onDeleteDeviceModel={canDelete ? handleDeleteDeviceModel : undefined}
                 onSubmit={handleSave}
+            />
+
+            {/* create or manage equipment models modal */}
+            <DeviceModelsDialog
+                open={modelsDialogOpen}
+                onOpenChange={setModelsDialogOpen}
+                models={deviceModels}
+                onCreateModel={handleCreateDeviceModel}
+                onDeleteModel={canDelete ? handleDeleteDeviceModel : undefined}
             />
 
             {/* delete confirmation dialog (admin and technician only) */}

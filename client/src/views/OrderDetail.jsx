@@ -34,6 +34,11 @@ import {
     mapCustomerFromApi,
 } from "@/services/customers.service";
 import { createProduct, getProducts } from "@/services/inventory.service";
+import {
+    createDeviceModel,
+    deleteDeviceModel,
+    getDeviceModels,
+} from "@/services/equipment.service";
 
 // individual service order detail view (/orders/:orderId)
 const OrderDetail = () => {
@@ -50,18 +55,20 @@ const OrderDetail = () => {
     const [loading, setLoading] = useState(true);
     const [customers, setCustomers] = useState([]);
     const [products, setProducts] = useState([]);
+    const [deviceModels, setDeviceModels] = useState([]);
     const [editEquipmentOpen, setEditEquipmentOpen] = useState(false);
 
-    // load order, customers and inventory products from api
+    // load order, customers, inventory products and device models from api
     useEffect(() => {
         let active = true;
         const loadDetail = async () => {
             setLoading(true);
             try {
-                const [orderRes, customersRes, productsRes] = await Promise.allSettled([
+                const [orderRes, customersRes, productsRes, modelsRes] = await Promise.allSettled([
                     getOrderById(orderId),
                     getCustomers(),
                     getProducts(),
+                    getDeviceModels(),
                 ]);
 
                 if (!active) return;
@@ -74,6 +81,9 @@ const OrderDetail = () => {
                 }
                 if (productsRes.status === "fulfilled" && Array.isArray(productsRes.value)) {
                     setProducts(productsRes.value);
+                }
+                if (modelsRes.status === "fulfilled" && Array.isArray(modelsRes.value)) {
+                    setDeviceModels(modelsRes.value);
                 }
             } finally {
                 if (active) setLoading(false);
@@ -147,6 +157,28 @@ const OrderDetail = () => {
             setCustomers((prev) => [newCustomer, ...prev]);
         }
         return newCustomer;
+    };
+
+    // create a new equipment model in api from equipment edit dialog
+    const handleCreateDeviceModel = async (payload) => {
+        const created = await createDeviceModel(payload);
+        if (created) {
+            setDeviceModels((prev) => {
+                const exists = prev.some(
+                    (m) =>
+                        m.deviceType === created.deviceType &&
+                        m.name.toLowerCase() === created.name.toLowerCase()
+                );
+                return exists ? prev : [...prev, created];
+            });
+        }
+        return created;
+    };
+
+    // delete an equipment model from api
+    const handleDeleteDeviceModel = async (id) => {
+        await deleteDeviceModel(id);
+        setDeviceModels((prev) => prev.filter((m) => String(m.id) !== String(id)));
     };
 
     // save initial diagnosis and reported problem to api
@@ -392,7 +424,10 @@ const OrderDetail = () => {
                     onOpenChange={setEditEquipmentOpen}
                     order={order}
                     customers={customers}
+                    deviceModels={deviceModels}
                     onCreateCustomer={handleCreateCustomer}
+                    onCreateDeviceModel={handleCreateDeviceModel}
+                    onDeleteDeviceModel={canDelete ? handleDeleteDeviceModel : undefined}
                     onSubmit={handleUpdateEquipment}
                 />
             )}

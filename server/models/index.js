@@ -8,6 +8,7 @@ import { InventoryMovement } from './inventoryMovementModel.js';
 import { UsedPart } from './usedPartModel.js';
 import { Attachment } from './attachmentModel.js';
 import { Payment } from './paymentModel.js';
+import { DeviceModel } from './deviceModel.js';
 
 Client.hasMany(Equipment, { foreignKey: 'clientId', as: 'equipment' });
 Equipment.belongsTo(Client, { foreignKey: 'clientId', as: 'client' });
@@ -62,6 +63,7 @@ export {
   UsedPart,
   Attachment,
   Payment,
+  DeviceModel,
 };
 
 
