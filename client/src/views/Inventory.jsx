@@ -22,6 +22,7 @@ import { ConfirmDeleteDialog } from "@/components/dashboard/ConfirmDeleteDialog"
 import { EmptyTableRow } from "@/components/dashboard/EmptyTableRow";
 import { ProductFormDialog } from "@/components/inventory/ProductFormDialog";
 import { formatCurrency } from "@/lib/format";
+import { getRolePermissions } from "@/lib/permissions";
 import { PRODUCT_CATEGORIES, getStockStatus } from "@/data/inventory";
 import {
     adjustProductStock,
@@ -53,7 +54,7 @@ const STOCK_BADGES = {
 
 const Inventory = () => {
     // only administrators can create, edit, adjust stock or delete products
-    const isAdmin = localStorage.getItem("role") === "administrador";
+    const { canManageInventory: isAdmin } = getRolePermissions();
 
     // products and ui state
     const [products, setProducts] = useState([]);

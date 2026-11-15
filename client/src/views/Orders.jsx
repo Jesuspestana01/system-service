@@ -31,6 +31,7 @@ import { ConfirmDeleteDialog } from "@/components/dashboard/ConfirmDeleteDialog"
 import { EmptyTableRow } from "@/components/dashboard/EmptyTableRow";
 import { OrderFormDialog } from "@/components/orders/OrderFormDialog";
 import { formatDate } from "@/lib/format";
+import { getRolePermissions } from "@/lib/permissions";
 import { ORDER_STATUSES, ORDER_STATUS_STYLES } from "@/data/orders";
 import {
     createOrder,
@@ -49,6 +50,8 @@ const statusFilterOptions = [
 
 const Orders = () => {
     const navigate = useNavigate();
+    // seller role cannot delete orders; admin and technician have full access
+    const { canDelete } = getRolePermissions();
 
     // orders, customers and ui state
     const [orders, setOrders] = useState([]);
@@ -278,7 +281,10 @@ const Orders = () => {
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">{formatDate(order.receivedAt)}</TableCell>
                                         <TableCell>
-                                            <RowActions onEdit={() => openEdit(order)} onDelete={() => setItemToDelete(order)}>
+                                            <RowActions
+                                                onEdit={() => openEdit(order)}
+                                                onDelete={canDelete ? () => setItemToDelete(order) : undefined}
+                                            >
                                                 <DropdownMenuItem onClick={() => navigate(`/orders/${order.id}`, { state: { order } })}>
                                                     <Eye />
                                                     Ver detalle de la orden
@@ -321,14 +327,16 @@ const Orders = () => {
                 onSubmit={handleSave}
             />
 
-            {/* delete confirmation dialog */}
-            <ConfirmDeleteDialog
-                open={Boolean(itemToDelete)}
-                onOpenChange={(open) => !open && setItemToDelete(null)}
-                title={`¿Eliminar la orden ${itemToDelete?.id ?? ""}?`}
-                description="Se eliminará la orden y su historial. Esta acción no se puede deshacer."
-                onConfirm={handleConfirmDelete}
-            />
+            {/* delete confirmation dialog (admin and technician only) */}
+            {canDelete && (
+                <ConfirmDeleteDialog
+                    open={Boolean(itemToDelete)}
+                    onOpenChange={(open) => !open && setItemToDelete(null)}
+                    title={`¿Eliminar la orden ${itemToDelete?.id ?? ""}?`}
+                    description="Se eliminará la orden y su historial. Esta acción no se puede deshacer."
+                    onConfirm={handleConfirmDelete}
+                />
+            )}
         </DashboardLayout>
     );
 };

@@ -6,21 +6,33 @@ export const USER_ROLES = [
     { value: "administrador", label: "Administrador" },
 ];
 
-// Fetch del registro
-export const register = async({ name, lastName, username, email, password, role }) => {
+// register a new user (defaults to seller role 'recepción')
+export const register = async ({ name, lastName, username, email, password, role = "recepción" }) => {
+    const cleanEmail = String(email ?? "").trim().toLowerCase();
+    const rawName = String(name ?? "").trim();
+    const parts = rawName.split(/\s+/);
+    const firstName = lastName ? rawName : (parts[0] || "Usuario");
+    const resolvedLastName = lastName
+        ? String(lastName).trim()
+        : (parts.slice(1).join(" ") || "-");
+    const emailPrefix = cleanEmail.split("@")[0].replace(/[^a-zA-Z0-9._]/g, "") || "user";
+    const resolvedUsername = username
+        ? String(username).trim()
+        : `${emailPrefix}${Math.floor(100 + Math.random() * 900)}`;
+
     const response = await apiRequest("/users", {
         method: "POST",
         body: {
-            name: name.trim(),
-            lastName: lastName.trim(),
-            username: username.trim(),
-            email: email.trim().toLowerCase(),
+            name: firstName,
+            lastName: resolvedLastName,
+            username: resolvedUsername,
+            email: cleanEmail,
             password,
-            role,
+            role: role === "vendedor" ? "recepción" : role,
         },
     });
     return response.data;
-}
+};
 
 // Fetch del login
 export const login = async ({ email, password }) => {

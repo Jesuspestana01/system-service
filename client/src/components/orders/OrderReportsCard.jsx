@@ -118,16 +118,18 @@ export function OrderReportsCard({ reports = [], defaultTechnician, onAddReport,
                                             <span className="text-xs text-muted-foreground">
                                                 {formatDateTime(report.createdAt)}
                                             </span>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon-xs"
-                                                aria-label="Eliminar informe"
-                                                className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive"
-                                                onClick={() => onDeleteReport(report.id)}
-                                            >
-                                                <Trash2 />
-                                            </Button>
+                                            {onDeleteReport && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon-xs"
+                                                    aria-label="Eliminar informe"
+                                                    className="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive"
+                                                    onClick={() => onDeleteReport(report.id)}
+                                                >
+                                                    <Trash2 />
+                                                </Button>
+                                            )}
                                         </div>
                                     </div>
                                     <p className="text-sm whitespace-pre-line text-foreground/90">{report.note}</p>

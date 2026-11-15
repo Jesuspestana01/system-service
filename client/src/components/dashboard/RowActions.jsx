@@ -8,7 +8,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-// Menú "..." de cada fila. `children` permite agregar acciones extra entre Editar y Eliminar.
+// row action menu; hides edit or delete items when handlers are omitted
 export function RowActions({ onEdit, onDelete, children }) {
     return (
         <DropdownMenu>
@@ -16,16 +16,22 @@ export function RowActions({ onEdit, onDelete, children }) {
                 <MoreHorizontal />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={onEdit}>
-                    <Pencil />
-                    Editar
-                </DropdownMenuItem>
+                {onEdit && (
+                    <DropdownMenuItem onClick={onEdit}>
+                        <Pencil />
+                        Editar
+                    </DropdownMenuItem>
+                )}
                 {children}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive" onClick={onDelete}>
-                    <Trash2 />
-                    Eliminar
-                </DropdownMenuItem>
+                {onDelete && (
+                    <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem variant="destructive" onClick={onDelete}>
+                            <Trash2 />
+                            Eliminar
+                        </DropdownMenuItem>
+                    </>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
     );

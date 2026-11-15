@@ -151,6 +151,20 @@ router.post('/', async (req, res) => {
       if (body[field] !== undefined) payload[field] = body[field];
     });
 
+    // default new users to seller role ('recepción') and normalize single-field name/username
+    if (!payload.role || payload.role.toLowerCase() === 'vendedor') {
+      payload.role = 'recepción';
+    }
+    if (payload.name && !payload.lastName) {
+      const parts = String(payload.name).trim().split(/\s+/);
+      payload.name = parts[0] || '';
+      payload.lastName = parts.slice(1).join(' ') || '-';
+    }
+    if (!payload.username && payload.email) {
+      const base = String(payload.email).split('@')[0].replace(/[^a-zA-Z0-9._]/g, '').toLowerCase() || 'user';
+      payload.username = `${base}${Math.floor(100 + Math.random() * 900)}`;
+    }
+
     if (!payload.name || !payload.lastName || !payload.username || !payload.email || !payload.password || !payload.role) {
       return res.status(400).json({
         success: false,

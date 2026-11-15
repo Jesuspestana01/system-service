@@ -13,6 +13,7 @@ import { OrderDiagnosisCard } from "@/components/orders/OrderDiagnosisCard";
 import { OrderReportsCard } from "@/components/orders/OrderReportsCard";
 import { OrderBillingCard } from "@/components/orders/OrderBillingCard";
 import { nowISO } from "@/lib/format";
+import { getRolePermissions } from "@/lib/permissions";
 import { withOrderDefaults } from "@/data/orders";
 import {
     addOrderBillingItem,
@@ -38,6 +39,8 @@ import { createProduct, getProducts } from "@/services/inventory.service";
 const OrderDetail = () => {
     const { orderId } = useParams();
     const location = useLocation();
+    // role permissions: seller cannot delete items/reports; only admin can create inventory products
+    const { canDelete, canManageInventory } = getRolePermissions();
 
     // initialize order from navigation state if available while fetching fresh data
     const [order, setOrder] = useState(() => {
@@ -368,7 +371,7 @@ const OrderDetail = () => {
                         reports={order.reports}
                         defaultTechnician={order.technician}
                         onAddReport={handleAddReport}
-                        onDeleteReport={handleDeleteReport}
+                        onDeleteReport={canDelete ? handleDeleteReport : undefined}
                     />
 
                     <OrderBillingCard
@@ -376,9 +379,9 @@ const OrderDetail = () => {
                         products={products}
                         onAddItem={handleAddBillingItem}
                         onUpdateItem={handleUpdateBillingItem}
-                        onRemoveItem={handleRemoveBillingItem}
+                        onRemoveItem={canDelete ? handleRemoveBillingItem : undefined}
                         onDiscountChange={handleGlobalDiscountChange}
-                        onCreateInventoryProduct={handleCreateInventoryProduct}
+                        onCreateInventoryProduct={canManageInventory ? handleCreateInventoryProduct : undefined}
                     />
                 </div>
             </div>

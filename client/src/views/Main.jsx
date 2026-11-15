@@ -21,6 +21,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ORDER_STATUS_STYLES } from "@/data/orders";
 import { formatDate } from "@/lib/format";
+import { getRolePermissions } from "@/lib/permissions";
 import { useEffect, useState } from "react";
 import { apiRequest } from "@/services/api";
 import { DashboardSummary } from "@/services/dashboard.service";
@@ -36,7 +37,7 @@ const getGreeting = () => {
 
 const Main = () => {
   // User role and name state from localStorage
-  const isAdmin = localStorage.getItem("role") === "administrador";
+  const { canManageUsers: isAdmin } = getRolePermissions();
   const [userName, setUserName] = useState(() => {
     const stored = localStorage.getItem("name");
     return stored && stored !== "undefined" ? stored : "";

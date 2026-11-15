@@ -120,10 +120,12 @@ export function OrderBillingCard({
                         Agrega repuestos del inventario o cargos por mano de obra y aplica descuentos por línea o globales.
                     </CardDescription>
                     <CardAction className="flex flex-wrap gap-2">
-                        <Button type="button" variant="outline" size="sm" onClick={() => setNewProductDialogOpen(true)}>
-                            <Package />
-                            Crear repuesto
-                        </Button>
+                        {onCreateInventoryProduct && (
+                            <Button type="button" variant="outline" size="sm" onClick={() => setNewProductDialogOpen(true)}>
+                                <Package />
+                                Crear repuesto
+                            </Button>
+                        )}
                         <Button type="button" size="sm" onClick={() => setServiceDialogOpen(true)}>
                             <Wrench />
                             Agregar servicio / cargo
@@ -243,16 +245,18 @@ export function OrderBillingCard({
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon-xs"
-                                                aria-label={`Quitar ${item.name}`}
-                                                className="text-muted-foreground hover:text-destructive"
-                                                onClick={() => onRemoveItem(item.id)}
-                                            >
-                                                <Trash2 />
-                                            </Button>
+                                            {onRemoveItem && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon-xs"
+                                                    aria-label={`Quitar ${item.name}`}
+                                                    className="text-muted-foreground hover:text-destructive"
+                                                    onClick={() => onRemoveItem(item.id)}
+                                                >
+                                                    <Trash2 />
+                                                </Button>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 );

@@ -22,6 +22,7 @@ import { ConfirmDeleteDialog } from "@/components/dashboard/ConfirmDeleteDialog"
 import { EmptyTableRow } from "@/components/dashboard/EmptyTableRow";
 import { CustomerFormDialog } from "@/components/customers/CustomerFormDialog";
 import { formatDate, getInitials, todayISO } from "@/lib/format";
+import { getRolePermissions } from "@/lib/permissions";
 import {
     createCustomer,
     deleteCustomer,
@@ -34,6 +35,8 @@ const isThisMonth = (isoDate) => String(isoDate ?? "").slice(0, 7) === todayISO(
 
 const Customers = () => {
     const navigate = useNavigate();
+    // seller role cannot delete customers; admin and technician have full access
+    const { canDelete } = getRolePermissions();
 
     // customers and ui state
     const [customers, setCustomers] = useState([]);
@@ -223,7 +226,10 @@ const Customers = () => {
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">{formatDate(customer.createdAt)}</TableCell>
                                         <TableCell>
-                                            <RowActions onEdit={() => openEdit(customer)} onDelete={() => setItemToDelete(customer)}>
+                                            <RowActions
+                                                onEdit={() => openEdit(customer)}
+                                                onDelete={canDelete ? () => setItemToDelete(customer) : undefined}
+                                            >
                                                 <DropdownMenuItem onClick={() => navigate(`/customers/${customer.id}`, { state: { customer } })}>
                                                     <Eye />
                                                     Ver historial de órdenes
@@ -256,14 +262,16 @@ const Customers = () => {
                 onSubmit={handleSave}
             />
 
-            {/* delete confirmation dialog */}
-            <ConfirmDeleteDialog
-                open={Boolean(itemToDelete)}
-                onOpenChange={(open) => !open && setItemToDelete(null)}
-                title={`¿Eliminar a ${itemToDelete?.name ?? "este cliente"}?`}
-                description="Se eliminará el cliente de forma permanente. Esta acción no se puede deshacer."
-                onConfirm={handleConfirmDelete}
-            />
+            {/* delete confirmation dialog (admin and technician only) */}
+            {canDelete && (
+                <ConfirmDeleteDialog
+                    open={Boolean(itemToDelete)}
+                    onOpenChange={(open) => !open && setItemToDelete(null)}
+                    title={`¿Eliminar a ${itemToDelete?.name ?? "este cliente"}?`}
+                    description="Se eliminará el cliente de forma permanente. Esta acción no se puede deshacer."
+                    onConfirm={handleConfirmDelete}
+                />
+            )}
         </DashboardLayout>
     );
 };
