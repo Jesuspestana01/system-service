@@ -1,7 +1,4 @@
-// TODO [BACKEND - Client (`server/models/clientModel.js`)]:
-// Datos de prueba. Reemplazar por `src/services/customers.service.js`.
-// Nota: `Client` en Sequelize separa `name` y `lastName`, usa `identityDocument` en vez de `document` y exige `email` (`allowNull: false`).
-
+// fallback customer records
 export const customers = [
     {
         id: "CL-006",

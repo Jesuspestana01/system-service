@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -14,12 +15,19 @@ import { Input } from "@/components/ui/input";
 // dialog to create or edit a customer
 export function CustomerFormDialog({ open, onOpenChange, customer, onSubmit }) {
     const isEditing = Boolean(customer);
+    const [submitting, setSubmitting] = useState(false);
 
-    const handleSubmit = (e) => {
+    // submit customer form data
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Evita que el envío llegue a un formulario padre cuando este modal se usa anidado
         e.stopPropagation();
-        onSubmit(Object.fromEntries(new FormData(e.currentTarget)));
+        setSubmitting(true);
+        try {
+            const data = Object.fromEntries(new FormData(e.currentTarget));
+            await onSubmit(data);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -65,7 +73,13 @@ export function CustomerFormDialog({ open, onOpenChange, customer, onSubmit }) {
 
                     <DialogFooter>
                         <DialogClose render={<Button type="button" variant="outline" />}>Cancelar</DialogClose>
-                        <Button type="submit">{isEditing ? "Guardar cambios" : "Crear cliente"}</Button>
+                        <Button type="submit" disabled={submitting}>
+                            {submitting
+                                ? "Guardando..."
+                                : isEditing
+                                  ? "Guardar cambios"
+                                  : "Crear cliente"}
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

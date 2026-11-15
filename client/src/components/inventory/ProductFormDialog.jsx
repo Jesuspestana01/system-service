@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -16,16 +17,24 @@ import { PRODUCT_CATEGORIES } from "@/data/inventory";
 // dialog to create or edit an inventory product
 export function ProductFormDialog({ open, onOpenChange, product, onSubmit }) {
     const isEditing = Boolean(product);
+    const [submitting, setSubmitting] = useState(false);
 
-    const handleSubmit = (e) => {
+    // submit product form data
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const data = Object.fromEntries(new FormData(e.currentTarget));
-        onSubmit({
-            ...data,
-            stock: Number(data.stock) || 0,
-            minStock: Number(data.minStock) || 0,
-            price: Number(data.price) || 0,
-        });
+        setSubmitting(true);
+        try {
+            const data = Object.fromEntries(new FormData(e.currentTarget));
+            await onSubmit({
+                ...data,
+                sku: product?.sku,
+                stock: Number(data.stock) || 0,
+                minStock: Number(data.minStock) || 0,
+                price: Number(data.price) || 0,
+            });
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -81,7 +90,13 @@ export function ProductFormDialog({ open, onOpenChange, product, onSubmit }) {
 
                     <DialogFooter>
                         <DialogClose render={<Button type="button" variant="outline" />}>Cancelar</DialogClose>
-                        <Button type="submit">{isEditing ? "Guardar cambios" : "Agregar producto"}</Button>
+                        <Button type="submit" disabled={submitting}>
+                            {submitting
+                                ? "Guardando..."
+                                : isEditing
+                                  ? "Guardar cambios"
+                                  : "Agregar producto"}
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

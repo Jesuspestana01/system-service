@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import {
     ArrowLeft,
@@ -18,7 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     Card,
-    CardAction,
     CardContent,
     CardDescription,
     CardHeader,
@@ -33,47 +32,82 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { DataToolbar } from "@/components/dashboard/DataToolbar";
 import { SimpleSelect } from "@/components/dashboard/SimpleSelect";
 import { EmptyTableRow } from "@/components/dashboard/EmptyTableRow";
 import { CustomerFormDialog } from "@/components/customers/CustomerFormDialog";
 import { formatCurrency, formatDate, getInitials } from "@/lib/format";
-import { customers as initialCustomers } from "@/data/customers";
 import {
     calculateOrderTotals,
     ORDER_STATUSES,
     ORDER_STATUS_STYLES,
-    orders as initialOrders,
 } from "@/data/orders";
+import {
+    getCustomerById,
+    mapCustomerFromApi,
+    updateCustomer,
+} from "@/services/customers.service";
 
+// status filter options for order history toolbar
 const statusFilterOptions = [
     { value: "all", label: "Todos los estados" },
     ...ORDER_STATUSES.map((status) => ({ value: status, label: status })),
 ];
 
+// calculate order total from billing items or fallback to finalCost
+const getOrderAmount = (order) => {
+    const calculated = calculateOrderTotals(order?.billing).total;
+    return calculated > 0 ? calculated : (Number(order?.finalCost) || Number(order?.estimatedCost) || 0);
+};
+
 const CustomerDetail = () => {
     const { customerId } = useParams();
     const location = useLocation();
 
-    // TODO [BACKEND - GET /api/clients/:id]:
-    // En `server/routes/clientRoutes.js`, `GET /api/clients/:id` ya incluye `serviceOrders` y `equipment`.
-    // Reemplazar estos datos locales cargando el cliente y su historial desde `customers.service.js`.
-    const [customer, setCustomer] = useState(
-        () => initialCustomers.find((c) => c.id === customerId) ?? location.state?.customer ?? null
-    );
+    // initialize customer from navigation state while fetching fresh data
+    const [customer, setCustomer] = useState(() => {
+        const passed = location.state?.customer;
+        return passed ? mapCustomerFromApi(passed) : null;
+    });
+    const [loading, setLoading] = useState(!location.state?.customer);
+    const [editOpen, setEditOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
 
+    // load customer profile and associated orders from api
+    useEffect(() => {
+        let active = true;
+        const loadCustomerDetail = async () => {
+            if (!customer) setLoading(true);
+            try {
+                const fetched = await getCustomerById(customerId);
+                if (active && fetched) {
+                    setCustomer(fetched);
+                }
+            } catch (error) {
+                console.error("failed to load customer detail:", error);
+            } finally {
+                if (active) setLoading(false);
+            }
+        };
+
+        loadCustomerDetail();
+        return () => {
+            active = false;
+        };
+    }, [customerId]);
+
+    // orders belonging to this customer
     const customerOrders = useMemo(
-        () =>
-            initialOrders.filter(
-                (order) => order.customerId === customer?.id || order.customer === customer?.name
-            ),
-        [customer?.id, customer?.name]
+        () => (Array.isArray(customer?.orders) ? customer.orders : []),
+        [customer?.orders]
     );
 
+    // filter customer orders by search term and status
     const filteredOrders = useMemo(() => {
         const term = search.trim().toLowerCase();
         return customerOrders.filter((order) => {
@@ -81,17 +115,20 @@ const CustomerDetail = () => {
             const matchesSearch =
                 !term ||
                 [order.id, order.device, order.deviceType, order.serial, order.technician].some(
-                    (value) => value?.toLowerCase().includes(term)
+                    (value) => String(value ?? "").toLowerCase().includes(term)
                 );
             return matchesStatus && matchesSearch;
         });
     }, [customerOrders, search, statusFilter]);
 
+    // compute customer order statistics
     const stats = useMemo(() => {
         const active = customerOrders.filter((o) => o.status !== "Entregado").length;
-        const completed = customerOrders.filter((o) => o.status === "Entregado" || o.status === "Listo").length;
+        const completed = customerOrders.filter(
+            (o) => o.status === "Entregado" || o.status === "Listo"
+        ).length;
         const totalBilled = customerOrders.reduce(
-            (sum, o) => sum + calculateOrderTotals(o.billing).total,
+            (sum, o) => sum + getOrderAmount(o),
             0
         );
         return {
@@ -102,6 +139,41 @@ const CustomerDetail = () => {
         };
     }, [customerOrders]);
 
+    // update customer details in api
+    const handleUpdateCustomer = async (data) => {
+        if (!customer) return;
+        const updated = await updateCustomer(customer.id, data);
+        if (updated) {
+            setCustomer((prev) => ({
+                ...prev,
+                ...updated,
+                orders: prev?.orders ?? updated.orders ?? [],
+            }));
+            setEditOpen(false);
+        }
+    };
+
+    // loading skeleton state
+    if (loading) {
+        return (
+            <DashboardLayout>
+                <div className="space-y-6">
+                    <Skeleton className="h-14 w-72" />
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                        {Array.from({ length: 4 }).map((_, idx) => (
+                            <Skeleton key={idx} className="h-24 w-full rounded-xl" />
+                        ))}
+                    </div>
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_1fr]">
+                        <Skeleton className="h-80 w-full rounded-xl" />
+                        <Skeleton className="h-80 w-full rounded-xl" />
+                    </div>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+    // not found state
     if (!customer) {
         return (
             <DashboardLayout>
@@ -125,7 +197,21 @@ const CustomerDetail = () => {
 
     return (
         <DashboardLayout>
+            {/* header with back navigation and edit button */}
+            <PageHeader
+                backTo="/customers"
+                backLabel="Volver a clientes"
+                title={customer.name}
+                description={`Ficha del cliente y su historial de órdenes (${customer.document || customer.code})`}
+                actions={
+                    <Button variant="outline" onClick={() => setEditOpen(true)}>
+                        <Pencil />
+                        Editar cliente
+                    </Button>
+                }
+            />
 
+            {/* summary stat cards */}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard
                     title="Órdenes registradas"
@@ -156,7 +242,7 @@ const CustomerDetail = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_1fr]">
-                {/* Ficha lateral de contacto del cliente */}
+                {/* customer contact sidebar card */}
                 <div>
                     <Card className="shadow-xs">
                         <CardHeader className="border-b">
@@ -168,7 +254,7 @@ const CustomerDetail = () => {
                                     <CardTitle className="truncate text-base font-semibold">
                                         {customer.name}
                                     </CardTitle>
-                                    <CardDescription>{customer.id}</CardDescription>
+                                    <CardDescription>{customer.code || `ID #${customer.id}`}</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -241,7 +327,7 @@ const CustomerDetail = () => {
                     </Card>
                 </div>
 
-                {/* Historial de órdenes de servicio asociadas al cliente */}
+                {/* customer service orders history card */}
                 <Card className="shadow-xs">
                     <CardHeader>
                         <DataToolbar
@@ -281,9 +367,9 @@ const CustomerDetail = () => {
                                     />
                                 )}
                                 {filteredOrders.map((order) => {
-                                    const orderTotal = calculateOrderTotals(order.billing).total;
+                                    const orderTotal = getOrderAmount(order);
                                     return (
-                                        <TableRow key={order.id}>
+                                        <TableRow key={order.id} className="animate-in fade-in duration-300">
                                             <TableCell className="font-medium">
                                                 <Link
                                                     to={`/orders/${order.id}`}
@@ -347,6 +433,14 @@ const CustomerDetail = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* modal to edit customer contact info */}
+            <CustomerFormDialog
+                open={editOpen}
+                onOpenChange={setEditOpen}
+                customer={customer}
+                onSubmit={handleUpdateCustomer}
+            />
         </DashboardLayout>
     );
 };

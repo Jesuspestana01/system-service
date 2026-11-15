@@ -3,13 +3,15 @@ import { apiRequest } from "@/services/api";
 // normalize backend inventory record into ui product format
 export const mapProductFromApi = (item) => {
   if (!item) return null;
+  const code = item.sku || `INV-${String(item.id).padStart(3, "0")}`;
   return {
     id: item.id,
-    sku: item.sku || `INV-${item.id}`,
+    code,
+    sku: code,
     name: item.name ?? "",
     description: item.description ?? "",
-    category: item.category ?? "Repuestos",
-    supplier: item.brand ?? item.supplier ?? "Apple",
+    category: item.category ?? "Otros",
+    supplier: item.brand ?? item.supplier ?? "",
     stock: Number(item.quantity ?? item.stock ?? 0),
     minStock: Number(item.minimumStock ?? item.minStock ?? 0),
     price: Number(item.unitPrice ?? item.price ?? 0),
@@ -18,19 +20,26 @@ export const mapProductFromApi = (item) => {
 };
 
 // build backend inventory payload from ui product fields
-const buildProductPayload = (data) => {
-  const quantity = Number(data.quantity ?? data.stock ?? 0);
-  return {
+const buildProductPayload = (data, isUpdate = false) => {
+  const quantity = Math.max(0, Number(data.quantity ?? data.stock ?? 0));
+  const payload = {
     name: String(data.name ?? "").trim(),
     description: data.description ? String(data.description).trim() : null,
-    category: String(data.category ?? "Repuestos").trim(),
-    brand: String(data.brand ?? data.supplier ?? "Apple").trim() || "Apple",
-    sku: data.sku || `SKU-${Date.now().toString().slice(-6)}`,
+    category: String(data.category ?? "Otros").trim(),
+    brand: String(data.brand ?? data.supplier ?? "").trim() || "General",
     quantity,
-    minimumStock: Number(data.minimumStock ?? data.minStock ?? 1),
-    unitPrice: Number(data.unitPrice ?? data.price ?? 0),
+    minimumStock: Math.max(0, Number(data.minimumStock ?? data.minStock ?? 1)),
+    unitPrice: Math.max(0, Number(data.unitPrice ?? data.price ?? 0)),
     status: quantity > 0 ? "disponible" : "agotado",
   };
+
+  if (data.sku) {
+    payload.sku = data.sku;
+  } else if (!isUpdate) {
+    payload.sku = `INV-${Date.now().toString().slice(-4)}`;
+  }
+
+  return payload;
 };
 
 // fetch all inventory products
@@ -42,7 +51,7 @@ export async function getProducts() {
 
 // create new inventory product
 export async function createProduct(data) {
-  const payload = buildProductPayload(data);
+  const payload = buildProductPayload(data, false);
   const response = await apiRequest("/inventory", {
     method: "POST",
     body: payload,
@@ -50,9 +59,9 @@ export async function createProduct(data) {
   return mapProductFromApi(response?.data);
 }
 
-// update inventory product
+// update existing inventory product
 export async function updateProduct(id, data) {
-  const payload = buildProductPayload(data);
+  const payload = buildProductPayload(data, true);
   const response = await apiRequest(`/inventory/${id}`, {
     method: "PUT",
     body: payload,
@@ -60,15 +69,28 @@ export async function updateProduct(id, data) {
   return mapProductFromApi(response?.data);
 }
 
-// adjust product stock
-export async function adjustProductStock(id, delta, reason = "Ajuste manual") {
-  return apiRequest(`/inventory/${id}/stock`, {
-    method: "PATCH",
-    body: { delta, reason },
-  });
+// adjust product stock by delta or target quantity
+export async function adjustProductStock(id, delta, nextQuantity, reason = "Ajuste manual") {
+  const performedBy = Number(localStorage.getItem("id")) || undefined;
+  try {
+    const response = await apiRequest(`/inventory/${id}/stock`, {
+      method: "PATCH",
+      body: { delta, quantity: nextQuantity, reason, performedBy },
+    });
+    return mapProductFromApi(response?.data);
+  } catch {
+    const response = await apiRequest(`/inventory/${id}`, {
+      method: "PUT",
+      body: {
+        quantity: nextQuantity,
+        status: nextQuantity > 0 ? "disponible" : "agotado",
+      },
+    });
+    return mapProductFromApi(response?.data);
+  }
 }
 
-// delete inventory product
+// delete inventory product by id
 export async function deleteProduct(id) {
   return apiRequest(`/inventory/${id}`, { method: "DELETE" });
 }

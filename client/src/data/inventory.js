@@ -1,7 +1,4 @@
-// TODO [BACKEND - Inventory (`server/models/inventoryModel.js`)]:
-// Datos de prueba. Reemplazar por `src/services/inventory.service.js`.
-// Mapeo de campos con Sequelize: `id -> sku`, `stock -> quantity`, `minStock -> minimumStock`, `price -> unitPrice`, `supplier -> brand`.
-
+// product categories and stock status helper
 export const PRODUCT_CATEGORIES = ["Pantallas", "Baterías", "Cargadores", "Almacenamiento", "Memorias RAM", "Accesorios", "Otros"];
 
 export const products = [

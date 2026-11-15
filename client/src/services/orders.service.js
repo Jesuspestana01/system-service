@@ -74,6 +74,8 @@ export const mapOrderFromApi = (raw) => {
     technician: technicianName,
     status: raw.status || "Recibido",
     receivedAt: raw.receivedAt || raw.createdAt,
+    estimatedCost: Number(raw.estimatedCost) || 0,
+    finalCost: Number(raw.finalCost) || 0,
     initialDiagnosis: {
       reportedProblem: raw.reportedProblem ?? "",
       diagnosis: raw.diagnosis ?? "",
