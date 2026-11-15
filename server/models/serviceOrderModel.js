@@ -57,6 +57,7 @@ const ServiceOrder = sequelize.define(
     reportedProblem: { // problema reportado por el cliente
       type: DataTypes.TEXT,
       allowNull: false,
+      defaultValue: '',
     },
     diagnosis: { // diagnóstico técnico del equipo
       type: DataTypes.TEXT,
@@ -75,6 +76,11 @@ const ServiceOrder = sequelize.define(
       type: DataTypes.ENUM('baja', 'media', 'alta', 'urgente'),
       allowNull: false,
       defaultValue: 'media',
+    },
+    discountPercent: { // porcentaje de descuento global de la orden
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: false,
+      defaultValue: 0,
     },
     estimatedCost: { // costo estimado de la reparación
       type: DataTypes.DECIMAL(10, 2),

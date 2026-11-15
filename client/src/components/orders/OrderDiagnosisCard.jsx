@@ -13,15 +13,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime } from "@/lib/format";
 
-/**
- * 1. Diagnóstico inicial al recibir el equipo.
- * Corresponde a `ServiceOrder.reportedProblem` (falla que indica el cliente) y
- * `ServiceOrder.diagnosis` (evaluación inicial al recibirlo en recepción/banco).
- *
- * TODO [BACKEND - PATCH /api/orders/:id/diagnosis]:
- * Al guardar, llamar a `updateOrderDiagnosis(order.id, { reportedProblem, diagnosis })`
- * en `src/services/orders.service.js`.
- */
+// initial diagnosis and reported problem card
 export function OrderDiagnosisCard({ initialDiagnosis, onSave }) {
     const [reportedProblem, setReportedProblem] = useState(initialDiagnosis?.reportedProblem ?? "");
     const [diagnosis, setDiagnosis] = useState(initialDiagnosis?.diagnosis ?? "");

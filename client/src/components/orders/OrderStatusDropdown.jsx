@@ -13,12 +13,7 @@ import {
 import { ORDER_STATUSES, ORDER_STATUS_STYLES } from "@/data/orders";
 import { cn } from "@/lib/utils";
 
-/**
- * 5. Botón desplegable para cambiar el estado de la orden de servicio.
- * TODO [BACKEND - PATCH /api/orders/:id/status]:
- * `onStatusChange` debe llamar a `updateOrderStatus(order.id, newStatus)` en `src/services/orders.service.js`,
- * que actualiza `ServiceOrder.status` y crea un registro de cambio de estado en `ServiceHistory`.
- */
+// dropdown to change service order status
 export function OrderStatusDropdown({ status, onStatusChange }) {
     return (
         <DropdownMenu>

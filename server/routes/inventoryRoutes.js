@@ -73,6 +73,23 @@ router.post('/', async (req, res) => {
       if (req.body[field] !== undefined) payload[field] = req.body[field];
     });
 
+    // map UI product fields (stock, minStock, price, supplier) when present
+    if (payload.quantity === undefined && req.body.stock !== undefined) {
+      payload.quantity = Number(req.body.stock) || 0;
+    }
+    if (payload.minimumStock === undefined && req.body.minStock !== undefined) {
+      payload.minimumStock = Number(req.body.minStock) || 0;
+    }
+    if (payload.unitPrice === undefined && req.body.price !== undefined) {
+      payload.unitPrice = Number(req.body.price) || 0;
+    }
+    if (payload.brand === undefined && req.body.supplier !== undefined) {
+      payload.brand = req.body.supplier || 'Apple';
+    }
+    if (!payload.sku) {
+      payload.sku = `SKU-${Date.now().toString().slice(-6)}`;
+    }
+
     if (!payload.name || !payload.category || !payload.sku) {
       return res.status(400).json({ success: false, message: 'Incomplete inventory data' });
     }

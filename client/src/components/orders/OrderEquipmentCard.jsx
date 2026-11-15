@@ -12,10 +12,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { formatDate } from "@/lib/format";
 
-/**
- * 4. Tarjeta lateral con los datos del equipo ingresado y del cliente,
- * con botón "Editar equipo" por si hubo alguna equivocación al recibirlo.
- */
+// sidebar card showing equipment and customer info
 export function OrderEquipmentCard({ order, customer, onEditEquipment }) {
     return (
         <Card className="shadow-xs">

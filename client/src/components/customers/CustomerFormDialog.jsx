@@ -11,9 +11,7 @@ import {
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-// TODO [BACKEND - POST /api/clients y PUT /api/clients/:id]:
-// Conectar `onSubmit` con `createCustomer` / `updateCustomer` (`src/services/customers.service.js`).
-// Nota: el modelo `Client` en `server/models/clientModel.js` separa `name` y `lastName`, usa `identityDocument` y exige `email`.
+// dialog to create or edit a customer
 export function CustomerFormDialog({ open, onOpenChange, customer, onSubmit }) {
     const isEditing = Boolean(customer);
 

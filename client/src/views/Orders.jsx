@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle2, ClipboardList, Eye, Inbox, Plus, RefreshCw, Wrench } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
@@ -29,17 +30,18 @@ import { RowActions } from "@/components/dashboard/RowActions";
 import { ConfirmDeleteDialog } from "@/components/dashboard/ConfirmDeleteDialog";
 import { EmptyTableRow } from "@/components/dashboard/EmptyTableRow";
 import { OrderFormDialog } from "@/components/orders/OrderFormDialog";
-import { useCrudState, nextId } from "@/hooks/useCrudState";
-import { formatDate, todayISO } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { ORDER_STATUSES, ORDER_STATUS_STYLES } from "@/data/orders";
 import {
-    orders as initialOrders,
-    DEFAULT_ORDER_STATUS,
-    ORDER_STATUSES,
-    ORDER_STATUS_STYLES,
-    withOrderDefaults,
-} from "@/data/orders";
-import { customers as initialCustomers } from "@/data/customers";
+    createOrder,
+    deleteOrder,
+    getOrders,
+    updateOrderEquipment,
+    updateOrderStatus,
+} from "@/services/orders.service";
+import { createCustomer, getCustomers } from "@/services/customers.service";
 
+// status filter options for toolbar select
 const statusFilterOptions = [
     { value: "all", label: "Todos los estados" },
     ...ORDER_STATUSES.map((status) => ({ value: status, label: status })),
@@ -47,81 +49,148 @@ const statusFilterOptions = [
 
 const Orders = () => {
     const navigate = useNavigate();
-    // TODO [BACKEND - GET /api/orders y GET /api/clients]:
-    // Cargar `getOrders()` y `getCustomers()` desde `src/services/` al montar el componente.
-    const crud = useCrudState(initialOrders, (items) => nextId(items, "OS", 4));
-    const [customers, setCustomers] = useState(initialCustomers);
+
+    // orders, customers and ui state
+    const [orders, setOrders] = useState([]);
+    const [customers, setCustomers] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [formState, setFormState] = useState({ open: false, item: null });
+    const [itemToDelete, setItemToDelete] = useState(null);
 
+    // fetch orders and customers on mount
+    useEffect(() => {
+        const loadData = async () => {
+            setLoading(true);
+            try {
+                const [ordersResult, customersResult] = await Promise.allSettled([
+                    getOrders(),
+                    getCustomers(),
+                ]);
+                if (ordersResult.status === "fulfilled" && Array.isArray(ordersResult.value)) {
+                    setOrders(ordersResult.value);
+                }
+                if (customersResult.status === "fulfilled" && Array.isArray(customersResult.value)) {
+                    setCustomers(customersResult.value);
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
+    }, []);
+
+    // filter orders by search term and selected status
     const filteredOrders = useMemo(() => {
         const term = search.trim().toLowerCase();
-        return crud.items.filter((order) => {
+        return orders.filter((order) => {
             const matchesStatus = statusFilter === "all" || order.status === statusFilter;
             const matchesSearch =
                 !term ||
                 [order.id, order.customer, order.device, order.serial].some((value) =>
-                    value?.toLowerCase().includes(term)
+                    String(value ?? "").toLowerCase().includes(term)
                 );
             return matchesStatus && matchesSearch;
         });
-    }, [crud.items, search, statusFilter]);
+    }, [orders, search, statusFilter]);
 
+    // compute summary counters by order status
     const stats = useMemo(() => {
-        const countBy = (...statuses) => crud.items.filter((o) => statuses.includes(o.status)).length;
+        const countBy = (...statuses) => orders.filter((o) => statuses.includes(o.status)).length;
         return {
-            total: crud.items.length,
+            total: orders.length,
             received: countBy("Recibido"),
             inProgress: countBy("En diagnóstico", "En reparación"),
             ready: countBy("Listo"),
         };
-    }, [crud.items]);
+    }, [orders]);
 
-    const handleSave = (data) => {
-        if (crud.form.item) {
-            // TODO [BACKEND - PUT /api/orders/:id/equipment]: llamar a `updateOrderEquipment(crud.form.item.id, data)`
-            crud.save(data);
+    // open modal to create a new order
+    const openCreate = () => setFormState({ open: true, item: null });
+
+    // open modal to edit an existing order
+    const openEdit = (order) => setFormState({ open: true, item: order });
+
+    // create or update order in api
+    const handleSave = async (data) => {
+        if (formState.item) {
+            const targetId = formState.item.dbId ?? formState.item.id;
+            const updated = await updateOrderEquipment(targetId, {
+                ...formState.item,
+                ...data,
+            });
+            if (updated) {
+                setOrders((prev) =>
+                    prev.map((o) => (o.id === formState.item.id ? updated : o))
+                );
+            }
+            setFormState({ open: false, item: null });
             return;
         }
-        // TODO [BACKEND - POST /api/orders]:
-        // const created = await createOrder(data);
-        // Al crear una orden nueva, entra como "Recibido" y navegamos a su vista individual
-        const created = crud.save(
-            withOrderDefaults({
-                ...data,
-                status: DEFAULT_ORDER_STATUS,
-                receivedAt: todayISO(),
-            })
-        );
-        navigate(`/orders/${created.id}`, { state: { order: created } });
+
+        const created = await createOrder(data);
+        if (created) {
+            setOrders((prev) => [created, ...prev]);
+            setFormState({ open: false, item: null });
+            navigate(`/orders/${created.id}`, { state: { order: created } });
+        }
     };
 
-    // Crea un cliente desde el modal de la orden y lo devuelve para seleccionarlo
-    const handleCreateCustomer = (data) => {
-        // TODO [BACKEND - POST /api/clients]: llamar a `createCustomer(data)` en `src/services/customers.service.js`
-        const newCustomer = {
-            ...data,
-            id: nextId(customers, "CL"),
-            ordersCount: 0,
-            createdAt: todayISO(),
-        };
-        setCustomers((prev) => [newCustomer, ...prev]);
+    // update order status from row actions menu
+    const handleStatusChange = async (order, status) => {
+        setOrders((prev) =>
+            prev.map((o) => (o.id === order.id ? { ...o, status } : o))
+        );
+        try {
+            const updated = await updateOrderStatus(order.dbId ?? order.id, status);
+            if (updated) {
+                setOrders((prev) =>
+                    prev.map((o) => (o.id === order.id ? updated : o))
+                );
+            }
+        } catch (error) {
+            console.error("failed to update status:", error);
+        }
+    };
+
+    // delete order from api and remove from state
+    const handleConfirmDelete = async () => {
+        if (!itemToDelete) return;
+        const target = itemToDelete;
+        setItemToDelete(null);
+        try {
+            await deleteOrder(target.dbId ?? target.id);
+            setOrders((prev) => prev.filter((o) => o.id !== target.id));
+        } catch (error) {
+            console.error("failed to delete order:", error);
+        }
+    };
+
+    // create a customer from order modal and append to state
+    const handleCreateCustomer = async (data) => {
+        const newCustomer = await createCustomer(data);
+        if (newCustomer) {
+            setCustomers((prev) => [newCustomer, ...prev]);
+        }
         return newCustomer;
     };
 
     return (
         <DashboardLayout>
+            {/* page title and create order button */}
             <PageHeader
                 title="Órdenes de servicio"
                 description="Gestiona los equipos ingresados y el avance de cada reparación."
                 actions={
-                    <Button onClick={crud.openCreate}>
+                    <Button onClick={openCreate}>
                         <Plus />
                         Nueva orden
                     </Button>
                 }
             />
 
+            {/* status counter cards */}
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 <StatCard title="Total de órdenes" value={stats.total} icon={ClipboardList} color="bg-blue-500/10 text-blue-600" />
                 <StatCard title="Recibidas" value={stats.received} hint="Pendientes por revisar" icon={Inbox} color="bg-sky-500/10 text-sky-600" />
@@ -129,11 +198,12 @@ const Orders = () => {
                 <StatCard title="Listas para entregar" value={stats.ready} icon={CheckCircle2} color="bg-emerald-500/10 text-emerald-600" />
             </div>
 
+            {/* orders table card */}
             <Card className="shadow-xs">
                 <CardHeader>
                     <DataToolbar
                         title="Listado de órdenes"
-                        description={`${filteredOrders.length} de ${crud.items.length} órdenes`}
+                        description={`${filteredOrders.length} de ${orders.length} órdenes`}
                         search={search}
                         onSearchChange={setSearch}
                         searchPlaceholder="Buscar orden, cliente o equipo..."
@@ -160,87 +230,104 @@ const Orders = () => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredOrders.length === 0 && <EmptyTableRow colSpan={7} />}
-                            {filteredOrders.map((order) => (
-                                <TableRow key={order.id}>
-                                    <TableCell className="font-medium">
-                                        <Link
-                                            to={`/orders/${order.id}`}
-                                            state={{ order }}
-                                            className="text-primary underline-offset-4 hover:underline"
-                                        >
-                                            {order.id}
-                                        </Link>
-                                    </TableCell>
-                                    <TableCell>{order.customer}</TableCell>
-                                    <TableCell>
-                                        <Link
-                                            to={`/orders/${order.id}`}
-                                            state={{ order }}
-                                            className="font-medium hover:underline"
-                                        >
-                                            {order.device}
-                                        </Link>
-                                        <div className="text-xs text-muted-foreground">
-                                            {order.deviceType} · <span className="font-mono">{order.serial}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-muted-foreground">{order.technician}</TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={ORDER_STATUS_STYLES[order.status]}>
-                                            {order.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-muted-foreground">{formatDate(order.receivedAt)}</TableCell>
-                                    <TableCell>
-                                        <RowActions onEdit={() => crud.openEdit(order)} onDelete={() => crud.requestDelete(order)}>
-                                            <DropdownMenuItem onClick={() => navigate(`/orders/${order.id}`, { state: { order } })}>
-                                                <Eye />
-                                                Ver detalle de la orden
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSub>
-                                                <DropdownMenuSubTrigger>
-                                                    <RefreshCw />
-                                                    Cambiar estado
-                                                </DropdownMenuSubTrigger>
-                                                <DropdownMenuSubContent>
-                                                    {/* TODO [BACKEND - PATCH /api/orders/:id/status]: llamar a `updateOrderStatus(order.id, status)` */}
-                                                    <DropdownMenuRadioGroup
-                                                        value={order.status}
-                                                        onValueChange={(status) => crud.update(order.id, { status })}
-                                                    >
-                                                        {ORDER_STATUSES.map((status) => (
-                                                            <DropdownMenuRadioItem key={status} value={status} closeOnClick>
-                                                                {status}
-                                                            </DropdownMenuRadioItem>
-                                                        ))}
-                                                    </DropdownMenuRadioGroup>
-                                                </DropdownMenuSubContent>
-                                            </DropdownMenuSub>
-                                        </RowActions>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                            {/* skeleton rows while loading */}
+                            {loading ? (
+                                Array.from({ length: 5 }).map((_, index) => (
+                                    <TableRow key={`skeleton-${index}`}>
+                                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-28" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-24 rounded-full" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                        <TableCell><Skeleton className="h-6 w-6 rounded-md" /></TableCell>
+                                    </TableRow>
+                                ))
+                            ) : filteredOrders.length === 0 ? (
+                                <EmptyTableRow colSpan={7} />
+                            ) : (
+                                filteredOrders.map((order) => (
+                                    <TableRow key={order.id} className="animate-in fade-in duration-300">
+                                        <TableCell className="font-medium">
+                                            <Link
+                                                to={`/orders/${order.id}`}
+                                                state={{ order }}
+                                                className="text-primary underline-offset-4 hover:underline"
+                                            >
+                                                {order.id}
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell>{order.customer}</TableCell>
+                                        <TableCell>
+                                            <Link
+                                                to={`/orders/${order.id}`}
+                                                state={{ order }}
+                                                className="font-medium hover:underline"
+                                            >
+                                                {order.device}
+                                            </Link>
+                                            <div className="text-xs text-muted-foreground">
+                                                {order.deviceType} · <span className="font-mono">{order.serial}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">{order.technician}</TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className={ORDER_STATUS_STYLES[order.status]}>
+                                                {order.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground">{formatDate(order.receivedAt)}</TableCell>
+                                        <TableCell>
+                                            <RowActions onEdit={() => openEdit(order)} onDelete={() => setItemToDelete(order)}>
+                                                <DropdownMenuItem onClick={() => navigate(`/orders/${order.id}`, { state: { order } })}>
+                                                    <Eye />
+                                                    Ver detalle de la orden
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSub>
+                                                    <DropdownMenuSubTrigger>
+                                                        <RefreshCw />
+                                                        Cambiar estado
+                                                    </DropdownMenuSubTrigger>
+                                                    <DropdownMenuSubContent>
+                                                        <DropdownMenuRadioGroup
+                                                            value={order.status}
+                                                            onValueChange={(status) => handleStatusChange(order, status)}
+                                                        >
+                                                            {ORDER_STATUSES.map((status) => (
+                                                                <DropdownMenuRadioItem key={status} value={status} closeOnClick>
+                                                                    {status}
+                                                                </DropdownMenuRadioItem>
+                                                            ))}
+                                                        </DropdownMenuRadioGroup>
+                                                    </DropdownMenuSubContent>
+                                                </DropdownMenuSub>
+                                            </RowActions>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>
             </Card>
 
+            {/* create or edit order modal */}
             <OrderFormDialog
-                open={crud.form.open}
-                onOpenChange={crud.setFormOpen}
-                order={crud.form.item}
+                open={formState.open}
+                onOpenChange={(open) => setFormState((prev) => ({ ...prev, open }))}
+                order={formState.item}
                 customers={customers}
                 onCreateCustomer={handleCreateCustomer}
                 onSubmit={handleSave}
             />
 
+            {/* delete confirmation dialog */}
             <ConfirmDeleteDialog
-                open={Boolean(crud.itemToDelete)}
-                onOpenChange={(open) => !open && crud.cancelDelete()}
-                title={`¿Eliminar la orden ${crud.itemToDelete?.id ?? ""}?`}
+                open={Boolean(itemToDelete)}
+                onOpenChange={(open) => !open && setItemToDelete(null)}
+                title={`¿Eliminar la orden ${itemToDelete?.id ?? ""}?`}
                 description="Se eliminará la orden y su historial. Esta acción no se puede deshacer."
-                onConfirm={crud.confirmDelete}
+                onConfirm={handleConfirmDelete}
             />
         </DashboardLayout>
     );

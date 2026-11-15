@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,19 +16,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { SimpleSelect } from "@/components/dashboard/SimpleSelect";
 import { CustomerFormDialog } from "@/components/customers/CustomerFormDialog";
-import { DEFAULT_ORDER_STATUS, ORDER_STATUS_STYLES, TECHNICIANS } from "@/data/orders";
+import { DEFAULT_ORDER_STATUS, ORDER_STATUS_STYLES } from "@/data/orders";
 import { APPLE_DEVICE_TYPES, getModelsByType, getSerialPlaceholder } from "@/data/apple-devices";
+import { getTechnicians } from "@/services/auth.service";
 
-/**
- * Modal para crear una orden o corregir los datos del equipo ingresado.
- *
- * TODO [BACKEND]:
- * - Al crear (`order === null`): enviar a `POST /api/orders` (`createOrder` en `src/services/orders.service.js`).
- * - Al editar (`order !== null`): enviar a `PUT /api/orders/:id/equipment` (`updateOrderEquipment`),
- *   que actualiza `Equipment` (`deviceType`, `model`, `serialNumber`, `color`, `accessories`, `physicalCondition`)
- *   y `ServiceOrder` (`clientId`, `assignedTechnician`).
- * - Al crear cliente con el botón "+": enviar a `POST /api/clients` (`createCustomer` en `src/services/customers.service.js`).
- */
+// modal dialog to create an order or edit equipment details
 export function OrderFormDialog({ open, onOpenChange, order, customers, onCreateCustomer, onSubmit }) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -47,51 +39,106 @@ export function OrderFormDialog({ open, onOpenChange, order, customers, onCreate
 
 function OrderForm({ order, customers, onCreateCustomer, onSubmit }) {
     const isEditing = Boolean(order);
-    const initialType = order?.deviceType ?? APPLE_DEVICE_TYPES[0];
+    const initialType = order?.deviceType && APPLE_DEVICE_TYPES.includes(order.deviceType)
+        ? order.deviceType
+        : APPLE_DEVICE_TYPES[0];
 
-    const [customerId, setCustomerId] = useState(order?.customerId ?? customers[0]?.id ?? null);
+    const [customerId, setCustomerId] = useState(
+        order?.customerId ? String(order.customerId) : (customers[0]?.id ? String(customers[0].id) : "")
+    );
     const [deviceType, setDeviceType] = useState(initialType);
     const [device, setDevice] = useState(order?.device ?? getModelsByType(initialType)[0]);
+    const [technicianValue, setTechnicianValue] = useState(
+        order?.technicianId ? String(order.technicianId) : "none"
+    );
+    const [technicians, setTechnicians] = useState([]);
     const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+
+    // sync selected customer when customers list loads
+    useEffect(() => {
+        if (!customerId && customers.length > 0) {
+            setCustomerId(String(customers[0].id));
+        }
+    }, [customers, customerId]);
+
+    // load active technicians from api
+    useEffect(() => {
+        getTechnicians()
+            .then((list) => {
+                const items = Array.isArray(list) ? list : [];
+                setTechnicians(items);
+                if (!order?.technicianId && order?.technician && order.technician !== "Sin asignar") {
+                    const matched = items.find(
+                        (u) => `${u.name ?? ""} ${u.lastName ?? ""}`.trim() === order.technician
+                    );
+                    if (matched) setTechnicianValue(String(matched.id));
+                }
+            })
+            .catch(() => {});
+    }, [order]);
 
     const customerOptions = customers.map((customer) => ({
-        value: customer.id,
-        label: `${customer.name} · ${customer.document}`,
+        value: String(customer.id),
+        label: `${customer.name}${customer.document ? ` · ${customer.document}` : ""}`,
     }));
 
-    // Al cambiar el tipo de equipo se selecciona el primer modelo de ese tipo
+    const technicianOptions = [
+        { value: "none", label: "Sin asignar" },
+        ...technicians.map((tech) => ({
+            value: String(tech.id),
+            label: `${tech.name ?? ""} ${tech.lastName ?? ""}`.trim(),
+        })),
+    ];
+
+    // select default model when device type changes
     const handleDeviceTypeChange = (type) => {
         setDeviceType(type);
         setDevice(getModelsByType(type)[0]);
     };
 
-    const handleCreateCustomer = (data) => {
-        const newCustomer = onCreateCustomer(data);
-        setCustomerId(newCustomer.id);
-        setCustomerDialogOpen(false);
+    // create new customer inline and select it
+    const handleCreateCustomer = async (data) => {
+        const newCustomer = await onCreateCustomer(data);
+        if (newCustomer?.id) {
+            setCustomerId(String(newCustomer.id));
+            setCustomerDialogOpen(false);
+        }
     };
 
-    const handleSubmit = (e) => {
+    // submit order form payload
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const customer = customers.find((c) => c.id === customerId);
+        setSubmitting(true);
+        try {
+            const formData = new FormData(e.currentTarget);
+            const customer = customers.find((c) => String(c.id) === String(customerId));
+            const selectedTech = technicians.find((t) => String(t.id) === String(technicianValue));
+            const technicianName = selectedTech
+                ? `${selectedTech.name ?? ""} ${selectedTech.lastName ?? ""}`.trim()
+                : "Sin asignar";
 
-        const payload = {
-            customerId,
-            customer: customer?.name ?? "",
-            deviceType,
-            device,
-            serial: formData.get("serial").trim().toUpperCase(),
-            technician: formData.get("technician"),
-        };
+            const payload = {
+                customerId: Number(customerId) || customerId,
+                customer: customer?.name ?? "",
+                equipmentId: order?.equipmentId ?? null,
+                deviceType,
+                device,
+                serial: formData.get("serial").trim().toUpperCase(),
+                technicianId: selectedTech ? Number(selectedTech.id) : null,
+                technician: technicianName,
+            };
 
-        if (isEditing) {
-            payload.color = formData.get("color")?.trim() ?? "";
-            payload.accessories = formData.get("accessories")?.trim() ?? "";
-            payload.physicalCondition = formData.get("physicalCondition")?.trim() ?? "";
+            if (isEditing) {
+                payload.color = formData.get("color")?.trim() ?? "";
+                payload.accessories = formData.get("accessories")?.trim() ?? "";
+                payload.physicalCondition = formData.get("physicalCondition")?.trim() ?? "";
+            }
+
+            await onSubmit(payload);
+        } finally {
+            setSubmitting(false);
         }
-
-        onSubmit(payload);
     };
 
     return (
@@ -116,7 +163,7 @@ function OrderForm({ order, customers, onCreateCustomer, onSubmit }) {
                 </DialogHeader>
 
                 <FieldGroup className="gap-4">
-                    {/* 1. Cliente */}
+                    {/* customer selector */}
                     <Field>
                         <FieldLabel htmlFor="order-customer">Cliente</FieldLabel>
                         <div className="flex gap-2">
@@ -143,7 +190,7 @@ function OrderForm({ order, customers, onCreateCustomer, onSubmit }) {
                         )}
                     </Field>
 
-                    {/* 2. Equipo Apple */}
+                    {/* device type and model */}
                     <div className="grid gap-4 sm:grid-cols-[2fr_3fr]">
                         <Field>
                             <FieldLabel htmlFor="order-device-type">Tipo de equipo</FieldLabel>
@@ -165,7 +212,7 @@ function OrderForm({ order, customers, onCreateCustomer, onSubmit }) {
                         </Field>
                     </div>
 
-                    {/* 3. Serie / IMEI */}
+                    {/* serial number or imei */}
                     <Field>
                         <FieldLabel htmlFor="order-serial">N° de serie o IMEI</FieldLabel>
                         <Input
@@ -179,18 +226,19 @@ function OrderForm({ order, customers, onCreateCustomer, onSubmit }) {
                         />
                     </Field>
 
-                    {/* 4. Técnico */}
+                    {/* assigned technician */}
                     <Field>
                         <FieldLabel htmlFor="order-technician">Técnico asignado</FieldLabel>
                         <SimpleSelect
                             id="order-technician"
                             name="technician"
-                            options={TECHNICIANS}
-                            defaultValue={order?.technician ?? TECHNICIANS[0]}
+                            options={technicianOptions}
+                            value={technicianValue}
+                            onValueChange={setTechnicianValue}
                         />
                     </Field>
 
-                    {/* Campos físicos adicionales del modelo `Equipment` visibles al editar el equipo */}
+                    {/* extra physical details when editing */}
                     {isEditing && (
                         <>
                             <div className="grid gap-4 sm:grid-cols-2">
@@ -228,13 +276,17 @@ function OrderForm({ order, customers, onCreateCustomer, onSubmit }) {
 
                 <DialogFooter>
                     <DialogClose render={<Button type="button" variant="outline" />}>Cancelar</DialogClose>
-                    <Button type="submit" disabled={!customerId}>
-                        {isEditing ? "Guardar cambios" : "Crear orden"}
+                    <Button type="submit" disabled={!customerId || submitting}>
+                        {submitting
+                            ? "Guardando..."
+                            : isEditing
+                              ? "Guardar cambios"
+                              : "Crear orden"}
                     </Button>
                 </DialogFooter>
             </form>
 
-            {/* Modal anidado para crear un cliente sin salir de la orden */}
+            {/* nested dialog to create a customer */}
             <CustomerFormDialog
                 open={customerDialogOpen}
                 onOpenChange={setCustomerDialogOpen}

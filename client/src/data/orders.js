@@ -1,28 +1,7 @@
-// TODO [BACKEND - ServiceOrder / Equipment / ServiceHistory / UsedPart]:
-// Datos de prueba. Reemplazar por la capa de servicios en `src/services/orders.service.js`.
-//
-// Correspondencia con los modelos del servidor (`server/models/`):
-// - Orden: `ServiceOrder` (orderNumber, clientId, equipmentId, assignedTechnician, reportedProblem,
-//   diagnosis, solution, status, estimatedCost, finalCost, receivedAt, deliveredAt)
-// - Equipo: `Equipment` (deviceType, brand="Apple", model, serialNumber, color, accessories,
-//   physicalCondition, observations)
-// - Informes del técnico: `ServiceHistory` (serviceOrderId, userId, action, description, createdAt)
-// - Cargos / repuestos: `UsedPart` (serviceOrderId, inventoryItemId, quantity, unitPrice)
-//
-// ⚠️ Discrepancias entre la UI y los modelos actuales del backend que debes contemplar al crear los endpoints:
-// 1. `ServiceOrder.reportedProblem` tiene `allowNull: false` en Sequelize, pero al crear la orden desde el modal
-//    solo se pide cliente, equipo, serial y técnico. El backend debe permitir `null`/`""` al crear o asignar
-//    un valor por defecto ("Pendiente de diagnóstico inicial") hasta que se llene en la vista de detalle.
-// 2. Estados: el modelo Sequelize define `ENUM('recibido', 'en revisión', 'en reparación', 'pendiente', 'resuelto', 'entregado', 'cancelado')`.
-//    Conviene unificar ese ENUM con `ORDER_STATUSES` o mapearlo en el servicio.
-// 3. Cobros (`billing.items` y `billing.discountPercent`): `UsedPart` hoy solo referencia `inventoryItemId` (no nulo)
-//    y no guarda descuentos ni cargos por mano de obra/servicios personalizados. Para soportar esta vista, en el
-//    backend conviene: (a) permitir `inventoryItemId: null` + campos `description`, `itemType` ('part'|'service') y
-//    `discountPercent` en `UsedPart` (o crear tabla `order_Charges`), y (b) agregar `discountPercent` a `ServiceOrder`.
-
+// order statuses and badge styles
 export const ORDER_STATUSES = ["Recibido", "En diagnóstico", "En reparación", "Listo", "Entregado"];
 
-// Estado con el que se crea toda orden nueva
+// default status for newly created orders
 export const DEFAULT_ORDER_STATUS = "Recibido";
 
 export const ORDER_STATUS_STYLES = {
@@ -33,7 +12,7 @@ export const ORDER_STATUS_STYLES = {
     "Entregado": "border-zinc-200 bg-zinc-100 text-zinc-600",
 };
 
-// TODO [BACKEND - GET /api/users?role=técnico]: cargar técnicos activos desde la tabla `users`
+// fallback technicians list
 export const TECHNICIANS = ["Sin asignar", "Pedro Ramírez", "José Castillo", "Daniela Rojas"];
 
 export const orders = [

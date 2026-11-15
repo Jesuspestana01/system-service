@@ -78,6 +78,20 @@ router.post('/', async (req, res) => {
       if (req.body[field] !== undefined) payload[field] = req.body[field];
     });
 
+    // normalize UI fields (full name, document, optional email)
+    if (!payload.identityDocument && req.body.document) {
+      payload.identityDocument = String(req.body.document).trim();
+    }
+    if (payload.name && !payload.lastName) {
+      const parts = String(payload.name).trim().split(/\s+/);
+      payload.name = parts[0] || '';
+      payload.lastName = parts.slice(1).join(' ') || '-';
+    }
+    if (!payload.email || !String(payload.email).trim()) {
+      const cleanDoc = String(payload.identityDocument || Date.now()).replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+      payload.email = `cliente.${cleanDoc}@ispot.local`;
+    }
+
     if (!payload.name || !payload.lastName || !payload.identityDocument || !payload.email || !payload.phone) {
       return res.status(400).json({ success: false, message: 'Incomplete client data' });
     }

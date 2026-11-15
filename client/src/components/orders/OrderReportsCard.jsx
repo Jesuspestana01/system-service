@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ClipboardPen, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,32 +12,49 @@ import { SimpleSelect } from "@/components/dashboard/SimpleSelect";
 import { Textarea } from "@/components/ui/textarea";
 import { TECHNICIANS } from "@/data/orders";
 import { formatDateTime, getInitials } from "@/lib/format";
+import { getTechnicians } from "@/services/auth.service";
 
-const reportAuthors = TECHNICIANS.filter((t) => t !== "Sin asignar");
+const fallbackAuthors = TECHNICIANS.filter((t) => t !== "Sin asignar");
 
-/**
- * 2. Bitácora de informes del técnico a medida que revisa y repara el equipo.
- * Corresponde al modelo `ServiceHistory` (`server/models/serviceHistoryModel.js`).
- *
- * TODO [BACKEND - POST /api/orders/:id/reports y DELETE /api/orders/:id/reports/:reportId]:
- * - Al agregar: llamar a `addOrderReport(order.id, { description: note })`. El backend debe tomar `userId`
- *   desde el token (`req.user.id`) en lugar del selector de técnico, y guardar `action: "Informe técnico"`.
- * - Al eliminar: llamar a `deleteOrderReport(order.id, reportId)`.
- */
+// technician reports log card linked to service history
 export function OrderReportsCard({ reports = [], defaultTechnician, onAddReport, onDeleteReport }) {
-    const initialAuthor =
+    const [authors, setAuthors] = useState(fallbackAuthors);
+    const [author, setAuthor] = useState(
         defaultTechnician && defaultTechnician !== "Sin asignar"
             ? defaultTechnician
-            : reportAuthors[0];
-
-    const [author, setAuthor] = useState(initialAuthor);
+            : fallbackAuthors[0]
+    );
     const [note, setNote] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
-    const handleSubmit = (e) => {
+    // load active technicians from api for author selector
+    useEffect(() => {
+        getTechnicians()
+            .then((list) => {
+                if (Array.isArray(list) && list.length > 0) {
+                    const names = list.map((u) => `${u.name ?? ""} ${u.lastName ?? ""}`.trim());
+                    setAuthors(names);
+                    if (defaultTechnician && defaultTechnician !== "Sin asignar" && names.includes(defaultTechnician)) {
+                        setAuthor(defaultTechnician);
+                    } else {
+                        setAuthor(names[0]);
+                    }
+                }
+            })
+            .catch(() => {});
+    }, [defaultTechnician]);
+
+    // submit new technician report
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!note.trim()) return;
-        onAddReport({ author, note: note.trim() });
-        setNote("");
+        if (!note.trim() || submitting) return;
+        setSubmitting(true);
+        try {
+            await onAddReport({ author, note: note.trim() });
+            setNote("");
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -53,7 +70,7 @@ export function OrderReportsCard({ reports = [], defaultTechnician, onAddReport,
             </CardHeader>
 
             <CardContent className="space-y-5 pt-4">
-                {/* Formulario para agregar un nuevo informe */}
+                {/* form to add a new report */}
                 <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border bg-muted/30 p-3">
                     <Textarea
                         value={note}
@@ -66,20 +83,20 @@ export function OrderReportsCard({ reports = [], defaultTechnician, onAddReport,
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-muted-foreground">Técnico:</span>
                             <SimpleSelect
-                                options={reportAuthors}
+                                options={authors}
                                 value={author}
                                 onValueChange={setAuthor}
                                 className="w-44 bg-background"
                             />
                         </div>
-                        <Button type="submit" size="sm" disabled={!note.trim()}>
+                        <Button type="submit" size="sm" disabled={!note.trim() || submitting}>
                             <Plus />
-                            Agregar informe
+                            {submitting ? "Agregando..." : "Agregar informe"}
                         </Button>
                     </div>
                 </form>
 
-                {/* Lista de informes */}
+                {/* chronological list of reports */}
                 {reports.length === 0 ? (
                     <p className="py-6 text-center text-sm text-muted-foreground">
                         Aún no hay informes técnicos registrados para esta orden.

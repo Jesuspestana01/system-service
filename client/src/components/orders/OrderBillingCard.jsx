@@ -36,21 +36,7 @@ import { ProductFormDialog } from "@/components/inventory/ProductFormDialog";
 import { calculateOrderTotals } from "@/data/orders";
 import { clampPercent, formatCurrency } from "@/lib/format";
 
-/**
- * 3. Apartado de cobros y presupuesto de la orden:
- * - Permite agregar repuestos existentes del inventario (`products`).
- * - Permite crear un producto nuevo en el inventario en el momento y agregarlo al cobro.
- * - Permite crear un servicio / mano de obra personalizado para la orden.
- * - Permite editar cantidad, precio unitario y % de descuento por línea, más un % de descuento global.
- *
- * TODO [BACKEND - UsedPart / Inventory / ServiceOrder]:
- * - Agregar del inventario: `POST /api/orders/:id/items` -> crea registro en `used_parts`, descuenta stock en `inventory`
- *   y registra `inventory_movements` (`movementType: 'salida'`).
- * - Crear producto e incluirlo: primero `POST /api/inventory` y luego `POST /api/orders/:id/items`.
- * - Editar cantidad / precio / % descuento por línea: `PATCH /api/orders/:id/items/:itemId`.
- * - Eliminar línea: `DELETE /api/orders/:id/items/:itemId` (si era de inventario, devolver stock).
- * - Cambiar % de descuento global: `PATCH /api/orders/:id/billing` y actualizar `ServiceOrder.finalCost`.
- */
+// order billing card for inventory parts, custom services and discounts
 export function OrderBillingCard({
     billing = { discountPercent: 0, items: [] },
     products = [],
@@ -103,12 +89,14 @@ export function OrderBillingCard({
         setServiceDialogOpen(false);
     };
 
-    const handleCreateProductAndAdd = (productData) => {
-        const created = onCreateInventoryProduct(productData);
-        onAddItem({
+    // create inventory item in api and add it to the order
+    const handleCreateProductAndAdd = async (productData) => {
+        const created = await onCreateInventoryProduct(productData);
+        if (!created) return;
+        await onAddItem({
             type: "inventory",
             inventoryItemId: created.id,
-            code: created.id,
+            code: created.sku || created.id,
             name: created.name,
             quantity: 1,
             unitPrice: created.price,

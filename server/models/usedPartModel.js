@@ -19,23 +19,41 @@ const UsedPart = sequelize.define(
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE',
     },
-    inventoryItemId: { // repuesto del inventario que fue consumido
+    inventoryItemId: { // repuesto del inventario (nulo cuando es un servicio o mano de obra)
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'inventory',
         key: 'id',
       },
       onUpdate: 'CASCADE',
-      onDelete: 'CASCADE',
+      onDelete: 'SET NULL',
     },
-    quantity: { // cantidad de repuesto utilizada
+    itemType: { // tipo de cargo: 'inventory' o 'service'
+      type: DataTypes.STRING(20),
+      allowNull: false,
+      defaultValue: 'inventory',
+    },
+    code: { // código o sku de referencia
+      type: DataTypes.STRING(50),
+      allowNull: true,
+    },
+    name: { // descripción o nombre del concepto cobrado
+      type: DataTypes.STRING(255),
+      allowNull: true,
+    },
+    quantity: { // cantidad utilizada
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 1,
     },
-    unitPrice: { // precio unitario del repuesto al momento de usarlo
+    unitPrice: { // precio unitario al momento de usarlo
       type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0,
+    },
+    discountPercent: { // porcentaje de descuento en la línea
+      type: DataTypes.DECIMAL(5, 2),
       allowNull: false,
       defaultValue: 0,
     },
