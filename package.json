@@ -2,7 +2,7 @@
   "name": "base-fullstack-boilerplate",
   "version": "1.0.0",
   "description": "A comprehensive full-stack application that combines a modern user interface with a robust API and a relational database.",
-  "license": "ISC",
+  "license": "UNLICENSED",
   "author": "Jesus Pestana",
   "type": "module",
   "main": "index.js",

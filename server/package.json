@@ -21,7 +21,7 @@
     "sequelize": "^6.37.7"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Jesus Pestana",
+  "license": "UNLICENSED",
   "type": "module"
 }
