@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import Signup from "./views/Signup";
 import Main from "./views/Main";
@@ -9,10 +10,20 @@ import Customers from "./views/Customers";
 import CustomerDetail from "./views/CustomerDetail";
 import Employees from "./views/Employees";
 import NotFound from "./views/NotFound";
+import { DEMO_SESSION_EVENT } from "./services/demo.service";
 
 const ProtectedView = () => {
+  const [sessionVersion, setSessionVersion] = useState(0);
   const isAuthenticated = Boolean(localStorage.getItem("role") && localStorage.getItem("id"));
-  return isAuthenticated ? <Outlet /> : <Navigate to="/" replace />;
+
+  // remount active protected view when demo role switches or demo data resets
+  useEffect(() => {
+    const handleDemoChange = () => setSessionVersion((prev) => prev + 1);
+    window.addEventListener(DEMO_SESSION_EVENT, handleDemoChange);
+    return () => window.removeEventListener(DEMO_SESSION_EVENT, handleDemoChange);
+  }, []);
+
+  return isAuthenticated ? <Outlet key={sessionVersion} /> : <Navigate to="/" replace />;
 };
 
 const Layout = () => {

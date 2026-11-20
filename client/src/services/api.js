@@ -1,3 +1,5 @@
+import { demoApiRequest, isDemoMode } from "@/services/demo.service";
+
 // Normaliza la URL base para que siempre termine en `/api` sin barra final,
 // incluso si en `.env` se configuró solo el dominio (ej: "https://system-service-eizd.onrender.com")
 const rawBaseUrl = (import.meta.env.VITE_API_URL ?? "http://localhost:3010/api").trim().replace(/\/+$/, "");
@@ -11,6 +13,11 @@ export const tokenStorage = {
 };
 
 export const apiRequest = async (endpoint, { method = "GET", body, headers } = {}) => {
+    // route requests to in-memory demo database when portfolio preview mode is active
+    if (isDemoMode() && !endpoint.startsWith("/users/login")) {
+        return demoApiRequest(endpoint, { method, body });
+    }
+
     const token = tokenStorage.get();
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {

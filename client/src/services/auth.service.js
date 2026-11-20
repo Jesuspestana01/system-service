@@ -1,4 +1,5 @@
 import { apiRequest } from "@/services/api";
+import { exitDemoSession } from "@/services/demo.service";
 
 export const USER_ROLES = [
     { value: "técnico", label: "Técnico" },
@@ -8,6 +9,7 @@ export const USER_ROLES = [
 
 // register a new user (defaults to seller role 'recepción')
 export const register = async ({ name, lastName, username, email, password, role = "recepción" }) => {
+    exitDemoSession();
     const cleanEmail = String(email ?? "").trim().toLowerCase();
     const rawName = String(name ?? "").trim();
     const parts = rawName.split(/\s+/);
@@ -36,6 +38,7 @@ export const register = async ({ name, lastName, username, email, password, role
 
 // Fetch del login
 export const login = async ({ email, password }) => {
+    exitDemoSession();
     const normalizedEmail = email.trim().toLowerCase();
 
     const response = await apiRequest("/users/login", {
@@ -86,8 +89,9 @@ export const getCurrentUser = () => {
     return id ? { id, name, role } : null;
 }
 
-// clear user session from localStorage
+// clear user session from localStorage and demo cache
 export const logout = () => {
+    exitDemoSession();
     localStorage.clear();
 };
 
