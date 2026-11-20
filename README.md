@@ -128,45 +128,6 @@ system-service/
 
 ---
 
-## Instalación y desarrollo local (uso exclusivo autorizado)
-
-> [!CAUTION]
-> Este repositorio es público únicamente como muestra de portafolio profesional. **No está permitida su descarga para implementación, despliegue o uso comercial/personal sin permiso expreso por escrito del autor.** Consulta [`LICENSE`](./LICENSE) para más detalles.
-
-Para referencia técnica de ejecución en entorno de desarrollo autorizado:
-
-1. **Instalar dependencias:**
-   ```bash
-   npm run install-all
-   ```
-
-2. **Variables de entorno en `server/.env`:**
-   ```env
-   PORT=3010
-   SECRET="tu_clave_jwt_segura"
-   NEON_CONNECTION_STRING="postgresql://usuario:password@host/neondb?sslmode=require"
-
-   # O respaldo local con PostgreSQL:
-   DB_DIALECT=postgres
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_USER=postgres
-   DB_PASSWORD=tu_password
-   DB_NAME=system_service
-   ```
-
-3. **Variables de entorno en `client/.env`:**
-   ```env
-   VITE_API_URL=http://localhost:3010/api
-   ```
-
-4. **Iniciar cliente y servidor en paralelo:**
-   ```bash
-   npm run dev
-   ```
-
----
-
 ## Derechos de autor y licencia
 
 **Copyright © 2026 Jesus Pestana (`@Jesuspestana01`). Todos los derechos reservados.**
